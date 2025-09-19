@@ -1,10 +1,10 @@
 import { drizzle } from "drizzle-orm/neon-http";
 import { neon } from "@neondatabase/serverless";
-import { eq, desc, asc, and, gte, lte, inArray, count } from "drizzle-orm";
+import { eq, desc, asc, and, gte, lte, inArray, count, sql } from "drizzle-orm";
 import { products, productAnalytics, settings, users, type Product, type InsertProduct, type ProductAnalytics, type InsertProductAnalytics, type Settings, type InsertSettings, type User, type InsertUser } from "@shared/schema";
 
-const sql = neon(process.env.DATABASE_URL!);
-const db = drizzle(sql);
+const neonClient = neon(process.env.DATABASE_URL!);
+const db = drizzle(neonClient);
 
 export interface IStorage {
   // Products

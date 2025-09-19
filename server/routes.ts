@@ -180,8 +180,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/categories", async (req, res) => {
     try {
       const products = await storage.getProducts();
-      const categories = [...new Set(products.map(p => p.category))].filter(Boolean);
-      const subcategories = [...new Set(products.map(p => p.subcategory))].filter(Boolean);
+      const categories = Array.from(new Set(products.map(p => p.category))).filter(Boolean);
+      const subcategories = Array.from(new Set(products.map(p => p.subcategory))).filter(Boolean);
       
       res.json({ categories, subcategories });
     } catch (error) {

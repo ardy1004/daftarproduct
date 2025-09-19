@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.SUPABASE_URL || 'https://ibmfsihdkdqxtjlavstp.supabase.co';
-const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlibWZzaWhka2RxeHRqbGF2c3RwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc2MTk1ODIsImV4cCI6MjA3MzE5NTU4Mn0.IMwcE5Cu5DKEXv0kGgsnKjhsBrOMmd9GFA9Lbrptul4';
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://ibmfsihdkdqxtjlavstp.supabase.co';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlibWZzaWhka2RxeHRqbGF2c3RwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc2MTk1ODIsImV4cCI6MjA3MzE5NTU4Mn0.IMwcE5Cu5DKEXv0kGgsnKjhsBrOMmd9GFA9Lbrptul4';
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
