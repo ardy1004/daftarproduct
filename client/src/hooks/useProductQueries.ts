@@ -110,7 +110,7 @@ export function useNonFeaturedProducts() {
       const { data, error } = await supabase
         .from('products')
         .select('*')
-        .eq('is_featured', false)
+        .not('is_featured', 'is', true)
         .order('created_at', { ascending: false });
       if (error) throw new Error(error.message);
       return data || [];

@@ -209,9 +209,16 @@ export function ProductManagementTab() {
       header: true,
       skipEmptyLines: true,
       complete: (results) => {
+        
         const parsedData = results.data as any[];
         // TODO: Add validation here
-        const importPromises = parsedData.map(item => addProduct.mutateAsync(item));
+        const importPromises = parsedData.map(item => {
+          const productData = {
+            ...item,
+            product_id: item.product_id || null
+          };
+          return addProduct.mutateAsync(productData);
+        });
         Promise.all(importPromises)
           .then(() => {
             toast({ title: "Success", description: `${parsedData.length} products imported successfully.` });

@@ -37,10 +37,10 @@ export function AddFeaturedProductDialog({ isOpen, onOpenChange, onAddProduct }:
                   <div className="flex items-center space-x-4">
                     <img 
                       src={product.image_url || ''} 
-                      alt={product.productName}
+                      alt={product.product_name}
                       className="w-12 h-12 rounded-md object-cover"
                     />
-                    <h3 className="font-medium">{product.productName}</h3>
+                    <h3 className="font-medium">{product.product_name}</h3>
                   </div>
                   <Button size="sm" onClick={() => onAddProduct(product)}>
                     Add

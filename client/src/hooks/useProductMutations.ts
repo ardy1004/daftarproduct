@@ -4,6 +4,7 @@ import * as z from "zod";
 
 // Schema for form validation, can be shared or defined here
 export const productFormSchema = z.object({
+  product_id: z.string().optional(),
   product_name: z.string().min(3),
   category: z.string().min(2),
   price: z.coerce.number().min(0),
@@ -20,6 +21,7 @@ export function useAddProduct() {
   return useMutation({
     mutationFn: async (newProduct: z.infer<typeof productFormSchema>) => {
       const { data, error } = await supabase.from('products').insert([{
+        product_id: newProduct.product_id,
         product_name: newProduct.product_name,
         category: newProduct.category,
         price: newProduct.price,
