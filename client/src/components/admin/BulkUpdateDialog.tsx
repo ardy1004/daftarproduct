@@ -29,7 +29,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useCategories } from "@/hooks/useProducts";
+import { useCategories } from "@/hooks/useProductQueries";
 
 const bulkUpdateSchema = z.object({
   productName: z.string().optional(),
