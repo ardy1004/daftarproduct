@@ -6,7 +6,7 @@ import {
   DialogTitle,
   DialogDescription
 } from "@/components/ui/dialog";
-import { useNonFeaturedProducts } from "@/hooks/useProducts";
+import { useNonFeaturedProducts } from "@/hooks/useProductQueries";
 import type { Product } from "@/types";
 
 interface AddFeaturedProductDialogProps {
