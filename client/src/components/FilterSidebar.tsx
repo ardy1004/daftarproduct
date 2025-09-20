@@ -5,8 +5,9 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
-import { useCategories } from '@/hooks/useProducts';
-import { formatPrice } from '@/lib/supabase';
+import { useCategories } from '@/hooks/useProductQueries';
+import { useSettings } from '@/hooks/useSettings';
+import { formatPrice } from '@/lib/utils';
 import type { FilterState } from '@/types';
 
 interface FilterSidebarProps {
@@ -18,6 +19,7 @@ interface FilterSidebarProps {
 
 export function FilterSidebar({ filters, onFiltersChange, showFilters, onToggleFilters }: FilterSidebarProps) {
   const { data: categoriesData } = useCategories();
+  const { data: settings, isLoading: isLoadingSettings } = useSettings();
   const [localPriceMin, setLocalPriceMin] = useState(filters.priceMin);
   const [localPriceMax, setLocalPriceMax] = useState(filters.priceMax);
 
@@ -72,6 +74,44 @@ export function FilterSidebar({ filters, onFiltersChange, showFilters, onToggleF
     });
   };
 
+  const renderCategoryFilter = () => {
+    if (isLoadingSettings) {
+      return <p>Loading filter settings...</p>;
+    }
+
+    if (!settings?.show_category_filter) {
+      return null;
+    }
+
+    return (
+      categoriesData?.length > 0 && (
+        <div className="mb-8">
+          <h4 className="font-semibold mb-4 flex items-center">
+            <Folder className="h-4 w-4 text-emerald mr-2" />
+            Kategori
+          </h4>
+          <div className="space-y-3">
+            {categoriesData.map((category) => (
+              <div key={category} className="flex items-center space-x-3">
+                <Checkbox
+                  id={`category-${category}`}
+                  checked={filters.categories.includes(category)}
+                  onCheckedChange={() => handleCategoryToggle(category)}
+                />
+                <label 
+                  htmlFor={`category-${category}`}
+                  className="text-sm cursor-pointer hover:text-emerald transition-colors"
+                >
+                  {category}
+                </label>
+              </div>
+            ))}
+          </div>
+        </div>
+      )
+    );
+  };
+
   return (
     <>
       {/* Mobile Filter Toggle */}
@@ -80,7 +120,6 @@ export function FilterSidebar({ filters, onFiltersChange, showFilters, onToggleF
           onClick={onToggleFilters}
           variant="outline"
           className="flex items-center space-x-2 w-full justify-center"
-          data-testid="button-toggle-filters"
         >
           <SlidersHorizontal className="h-4 w-4" />
           <span>Filter & Sort</span>
@@ -96,7 +135,6 @@ export function FilterSidebar({ filters, onFiltersChange, showFilters, onToggleF
               variant="ghost"
               size="sm"
               className="text-emerald hover:text-emerald/80 text-sm font-semibold"
-              data-testid="button-reset-filters"
             >
               <RotateCcw className="h-4 w-4 mr-1" />
               Reset
@@ -109,8 +147,6 @@ export function FilterSidebar({ filters, onFiltersChange, showFilters, onToggleF
               <Tag className="h-4 w-4 text-emerald mr-2" />
               Rentang Harga
             </h4>
-            
-            {/* Price inputs */}
             <div className="grid grid-cols-2 gap-2 mb-4">
               <div>
                 <label className="text-xs text-muted-foreground">Minimum</label>
@@ -120,7 +156,6 @@ export function FilterSidebar({ filters, onFiltersChange, showFilters, onToggleF
                   onChange={(e) => setLocalPriceMin(Number(e.target.value))}
                   placeholder="0"
                   className="w-full text-sm"
-                  data-testid="input-price-min"
                 />
               </div>
               <div>
@@ -131,12 +166,9 @@ export function FilterSidebar({ filters, onFiltersChange, showFilters, onToggleF
                   onChange={(e) => setLocalPriceMax(Number(e.target.value))}
                   placeholder="20000000"
                   className="w-full text-sm"
-                  data-testid="input-price-max"
                 />
               </div>
             </div>
-            
-            {/* Price range slider */}
             <div className="px-2 mb-4">
               <Slider
                 value={[localPriceMin, localPriceMax]}
@@ -145,43 +177,15 @@ export function FilterSidebar({ filters, onFiltersChange, showFilters, onToggleF
                 min={0}
                 step={100000}
                 className="w-full"
-                data-testid="slider-price-range"
               />
             </div>
-            
             <div className="text-sm text-muted-foreground">
               {formatPrice(localPriceMin)} - {formatPrice(localPriceMax)}
             </div>
           </div>
           
           {/* Category Filter */}
-          {categoriesData?.categories && categoriesData.categories.length > 0 && (
-            <div className="mb-8">
-              <h4 className="font-semibold mb-4 flex items-center">
-                <Folder className="h-4 w-4 text-emerald mr-2" />
-                Kategori
-              </h4>
-              
-              <div className="space-y-3">
-                {categoriesData.categories.map((category) => (
-                  <div key={category} className="flex items-center space-x-3">
-                    <Checkbox
-                      id={`category-${category}`}
-                      checked={filters.categories.includes(category)}
-                      onCheckedChange={() => handleCategoryToggle(category)}
-                      data-testid={`checkbox-category-${category}`}
-                    />
-                    <label 
-                      htmlFor={`category-${category}`}
-                      className="text-sm cursor-pointer hover:text-emerald transition-colors"
-                    >
-                      {category}
-                    </label>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+          {renderCategoryFilter()}
           
           {/* Sort Options */}
           <div>
@@ -189,17 +193,16 @@ export function FilterSidebar({ filters, onFiltersChange, showFilters, onToggleF
               <i className="fas fa-sort text-emerald mr-2"></i>
               Urutkan
             </h4>
-            
             <Select value={filters.sortBy} onValueChange={handleSortChange}>
-              <SelectTrigger className="w-full" data-testid="select-sort">
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Pilih urutan" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="popular">Populer</SelectItem>
-                <SelectItem value="bestseller">Terlaris</SelectItem>
-                <SelectItem value="price_low">Harga Termurah</SelectItem>
-                <SelectItem value="price_high">Harga Tertinggi</SelectItem>
-                <SelectItem value="recommended">Rekomendasi</SelectItem>
+                <SelectItem value="terlaris">Terlaris</SelectItem>
+                <SelectItem value="harga_termurah">Harga Termurah</SelectItem>
+                <SelectItem value="harga_tertinggi">Harga Tertinggi</SelectItem>
+                <SelectItem value="rekomendasi">Rekomendasi</SelectItem>
               </SelectContent>
             </Select>
           </div>

@@ -1,13 +1,33 @@
-import { useState } from 'react';
+import { useState } from "react";
 import { Sparkles, ArrowRight, Search } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { FeaturedCarousel } from '@/components/FeaturedCarousel';
 import { ProductCard } from '@/components/ProductCard';
 import { FilterSidebar } from '@/components/FilterSidebar';
 import { Button } from '@/components/ui/button';
-import { useProducts, useLatestProducts, useTrackProductClick } from '@/hooks/useProducts';
-import type { FilterState } from '@/types';
-import { Link } from 'wouter';
+import { useProducts, useLatestProducts, useTrackProductClick } from "@/hooks/useProductQueries";
+import type { FilterState, Product } from '@/types';
+
+// Assuming FilterState and Product types are defined in @/types/index.ts
+interface Product {
+  id: string;
+  product_name: string;
+  price: number;
+  image_url: string;
+  affiliate_url: string;
+  sales?: number;
+  is_featured?: boolean;
+  featured_order?: number;
+  created_at?: string;
+}
+
+interface FilterState {
+  search: string;
+  categories: string[];
+  priceMin: number;
+  priceMax: number;
+  sortBy: string;
+}
 
 export default function Home() {
   const [filters, setFilters] = useState<FilterState>({
@@ -19,9 +39,10 @@ export default function Home() {
   });
   const [showFilters, setShowFilters] = useState(false);
 
-  const { data: products = [], isLoading } = useProducts(filters);
-  const { data: latestProducts = [] } = useLatestProducts(4);
-  const trackClick = useTrackProductClick();
+  // Use the centralized data hooks
+  const { data: latestProducts = [], isLoading: isLoadingLatest } = useLatestProducts(4);
+  const { data: allProducts = [], isLoading: isLoadingAll } = useProducts(filters);
+  const trackProductClick = useTrackProductClick();
 
   const handleFiltersChange = (newFilters: FilterState) => {
     setFilters(newFilters);
@@ -31,12 +52,12 @@ export default function Home() {
     setFilters(prev => ({ ...prev, search }));
   };
 
-  const handleProductClick = (productId: string) => {
-    trackClick.mutate(productId);
-  };
-
   const toggleFilters = () => {
     setShowFilters(!showFilters);
+  };
+
+  const handleProductClick = (productId: string) => {
+    trackProductClick.mutate(productId);
   };
 
   return (
@@ -75,7 +96,18 @@ export default function Home() {
             </Button>
           </div>
           
-          {latestProducts.length > 0 ? (
+          {isLoadingLatest ? (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="bg-card rounded-xl border border-border p-4 loading-pulse">
+                  <div className="bg-muted h-48 rounded-lg mb-4"></div>
+                  <div className="bg-muted h-4 rounded mb-2"></div>
+                  <div className="bg-muted h-4 rounded w-2/3 mb-4"></div>
+                  <div className="bg-muted h-8 rounded"></div>
+                </div>
+              ))}
+            </div>
+          ) : latestProducts.length > 0 ? (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4" data-testid="grid-latest-products">
               {latestProducts.map((product) => (
                 <ProductCard
@@ -115,7 +147,7 @@ export default function Home() {
             {/* Products Grid */}
             <div className="lg:col-span-3">
               {/* Loading state */}
-              {isLoading && (
+              {isLoadingAll && (
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8" data-testid="loading-products">
                   {[...Array(6)].map((_, i) => (
                     <div key={i} className="bg-card rounded-xl border border-border p-4 loading-pulse">
@@ -129,17 +161,17 @@ export default function Home() {
               )}
               
               {/* Products results */}
-              {!isLoading && (
+              {!isLoadingAll && (
                 <div>
                   <div className="flex items-center justify-between mb-6">
                     <span className="text-muted-foreground" data-testid="text-products-count">
-                      Menampilkan {products.length} produk
+                      Menampilkan {allProducts.length} produk
                     </span>
                   </div>
                   
-                  {products.length > 0 ? (
+                  {allProducts.length > 0 ? (
                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-4" data-testid="grid-all-products">
-                      {products.map((product) => (
+                      {allProducts.map((product) => (
                         <ProductCard
                           key={product.id}
                           product={product}
@@ -184,7 +216,7 @@ export default function Home() {
                   <i className="fas fa-store text-white text-sm"></i>
                 </div>
                 <h3 className="text-lg font-bold bg-gradient-to-r from-emerald to-metallic bg-clip-text text-transparent">
-                  MarketPlace Pro
+                  DAFTAR PRODUCT
                 </h3>
               </div>
               <p className="text-muted-foreground text-sm mb-4">
@@ -226,7 +258,7 @@ export default function Home() {
             <div>
               <h4 className="font-semibold mb-4">Kontak</h4>
               <div className="space-y-2 text-sm text-muted-foreground">
-                <p className="flex items-center"><i className="fas fa-envelope text-emerald mr-2"></i> support@marketplace.com</p>
+                <p className="flex items-center"><i className="fas fa-envelope text-emerald mr-2"></i> support@daftarproduct.com</p>
                 <p className="flex items-center"><i className="fas fa-phone text-emerald mr-2"></i> +62 21 1234 5678</p>
                 <p className="flex items-center"><i className="fas fa-map-marker-alt text-emerald mr-2"></i> Jakarta, Indonesia</p>
               </div>
@@ -235,7 +267,7 @@ export default function Home() {
           
           <div className="border-t border-border pt-8 flex flex-col md:flex-row items-center justify-between">
             <p className="text-muted-foreground text-sm">
-              © 2024 MarketPlace Pro. All rights reserved.
+              © 2024 DAFTAR PRODUCT. All rights reserved.
             </p>
             <div className="flex items-center space-x-4 mt-4 md:mt-0">
               <span className="text-xs text-muted-foreground">Powered by</span>

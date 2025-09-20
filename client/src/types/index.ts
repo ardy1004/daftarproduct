@@ -1,18 +1,18 @@
 export interface Product {
   id: string;
-  productId: string | null;
-  productName: string;
+  product_id: string | null;
+  product_name: string;
   price: string;
-  originalPrice?: string | null;
+  original_price?: string | null;
   sales: number | null;
   category: string;
   subcategory: string | null;
-  affiliateUrl: string | null;
-  imageUrl: string | null;
-  rating: string | null;
-  isFeatured: boolean | null;
-  featuredOrder: number | null;
-  createdAt: string | null;
+  affiliate_url: string | null;
+  image_url: string | null;
+  rating: number | null;
+  is_featured: boolean | null;
+  featured_order: number | null;
+  created_at: string | null;
 }
 
 export interface ProductAnalytics {
@@ -26,6 +26,8 @@ export interface Settings {
   id: string;
   showCategoryFilter: boolean | null;
   updatedAt: string | null;
+  facebook_pixel_id?: string | null;
+  google_analytics_id?: string | null;
 }
 
 export interface FilterState {

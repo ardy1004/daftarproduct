@@ -1,15 +1,15 @@
 import { useState } from 'react';
-import { useLocation } from 'wouter';
+import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Lock, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '../lib/supabaseClient';
 
 export default function AdminLogin() {
-  const [, setLocation] = useLocation();
+  const navigate = useNavigate();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -42,7 +42,7 @@ export default function AdminLogin() {
         description: "Redirecting to dashboard..."
       });
 
-      setLocation('/admin/dashboard');
+      navigate('/admin/dashboard');
     } catch (error) {
       toast({
         variant: "destructive",

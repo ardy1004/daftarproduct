@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'wouter';
+import { Link } from 'react-router-dom';
 import { Search, Moon, Sun, Menu, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,12 +19,12 @@ export function Header({ searchQuery, onSearchChange, onMenuToggle }: HeaderProp
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           {/* Logo */}
-          <Link href="/" className="flex items-center space-x-3" data-testid="link-home">
+          <Link to="/" className="flex items-center space-x-3" data-testid="link-home">
             <div className="w-10 h-10 bg-gradient-to-br from-emerald to-metallic rounded-xl flex items-center justify-center">
               <i className="fas fa-store text-white text-lg"></i>
             </div>
             <h1 className="text-2xl font-bold bg-gradient-to-r from-emerald to-metallic bg-clip-text text-transparent">
-              MarketPlace Pro
+              DAFTAR PRODUCT
             </h1>
           </Link>
           
@@ -69,15 +69,6 @@ export function Header({ searchQuery, onSearchChange, onMenuToggle }: HeaderProp
               <Menu className="h-4 w-4" />
             </Button>
             
-            {/* Admin Dashboard Link */}
-            <Link
-              href="/admin/dashboard"
-              className="hidden md:flex px-4 py-2 bg-gradient-to-r from-emerald to-metallic text-white rounded-lg hover:shadow-lg hover:scale-105 transition-all duration-200 items-center space-x-2"
-              data-testid="link-admin-dashboard"
-            >
-              <Settings className="h-4 w-4" />
-              <span>Admin</span>
-            </Link>
           </div>
         </div>
         

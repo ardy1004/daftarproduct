@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { ChevronLeft, ChevronRight, TrendingUp, Award } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useFeaturedProducts } from '@/hooks/useProducts';
-import { formatPrice, calculateDiscount } from '@/lib/supabase';
+import { useFeaturedProducts } from '@/hooks/useProductQueries';
+import { formatPrice, calculateDiscount } from '@/lib/utils';
 import type { Product } from '@/types';
 
 interface FeaturedCarouselProps {
@@ -25,8 +25,8 @@ export function FeaturedCarousel({ onProductClick }: FeaturedCarouselProps) {
 
   const handleProductClick = (product: Product) => {
     onProductClick(product.id);
-    if (product.affiliateUrl) {
-      window.open(product.affiliateUrl, '_blank');
+    if (product.affiliate_url) {
+      window.open(product.affiliate_url, '_blank');
     }
   };
 
@@ -70,11 +70,20 @@ export function FeaturedCarousel({ onProductClick }: FeaturedCarouselProps) {
     <section className="relative h-96 md:h-[500px] overflow-hidden bg-gradient-to-br from-emerald/10 to-metallic/10">
       <div className="absolute inset-0">
         {products.map((product, index) => {
-          const discount = product.originalPrice 
-            ? calculateDiscount(product.price, product.originalPrice)
+          const discount = product.original_price 
+            ? calculateDiscount(product.price, product.original_price)
             : 0;
           const rating = parseFloat(product.rating || '0');
           
+          // Construct optimized image URLs
+          const optimizedBgUrl = product.image_url
+            ? `${product.image_url}?width=1200&quality=80`
+            : 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=1200&h=600&fit=crop&crop=center';
+          
+          const optimizedImageUrl = product.image_url
+            ? `${product.image_url}?width=600&quality=85`
+            : 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=600&h=600&fit=crop&crop=center';
+
           return (
             <div
               key={product.id}
@@ -91,7 +100,7 @@ export function FeaturedCarousel({ onProductClick }: FeaturedCarouselProps) {
               <div 
                 className="absolute inset-0 bg-cover bg-center"
                 style={{
-                  backgroundImage: `linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.6)), url('${product.imageUrl || 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=1200&h=600&fit=crop&crop=center'}')`
+                  backgroundImage: `linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.6)), url('${optimizedBgUrl}')`
                 }}
               />
               
@@ -113,18 +122,21 @@ export function FeaturedCarousel({ onProductClick }: FeaturedCarouselProps) {
                       )}
                     </div>
                     
-                    <h2 className="text-4xl md:text-6xl font-bold mb-4" data-testid={`carousel-product-name-${product.id}`}>
-                      {product.productName}
+                    <h2 className="text-3xl md:text-5xl font-bold mb-2" data-testid={`carousel-product-name-${product.id}`}>
+                      {product.product_name}
                     </h2>
+                    <p className="text-lg text-white/80 mb-4" data-testid={`carousel-product-id-${product.id}`}>
+                      {product.product_id}
+                    </p>
                     
                     <div className="flex items-center space-x-4 mb-6">
                       <span className="text-2xl md:text-3xl font-bold text-yellow" data-testid={`carousel-price-${product.id}`}>
                         {formatPrice(product.price)}
                       </span>
-                      {product.originalPrice && (
+                      {product.original_price && (
                         <>
                           <span className="text-lg text-gray-300 line-through" data-testid={`carousel-original-price-${product.id}`}>
-                            {formatPrice(product.originalPrice)}
+                            {formatPrice(product.original_price)}
                           </span>
                           <span className="px-2 py-1 bg-emerald text-emerald-foreground rounded text-sm font-semibold">
                             HEMAT {discount}%
@@ -163,8 +175,8 @@ export function FeaturedCarousel({ onProductClick }: FeaturedCarouselProps) {
                   
                   <div className="hidden md:block">
                     <img
-                      src={product.imageUrl || 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=600&h=600&fit=crop&crop=center'}
-                      alt={product.productName}
+                      src={optimizedImageUrl}
+                      alt={product.product_name}
                       className="w-full max-w-md mx-auto rounded-2xl shadow-2xl transform hover:scale-105 transition-transform duration-300"
                     />
                   </div>
