@@ -12,6 +12,54 @@ function shuffleArray<T>(array: T[]): T[] {
   return newArray;
 }
 
+// This is the original function, restored for use in admin panels.
+export function useProducts(filters?: FilterState) {
+  return useQuery<Product[]>({
+    queryKey: ['products', filters],
+    queryFn: async () => {
+      let query = supabase.from('products').select('*');
+
+      // Apply filters
+      if (filters?.search) {
+        query = query.ilike('product_name', `%${filters.search}%`);
+      }
+      if (filters?.categories && filters.categories.length > 0) {
+        query = query.in('category', filters.categories);
+      }
+      if (filters?.priceMin !== undefined) {
+        query = query.gte('price', filters.priceMin);
+      }
+      if (filters?.priceMax !== undefined) {
+        query = query.lte('price', filters.priceMax);
+      }
+
+      // Apply sorting, except for 'rekomendasi' which is handled post-fetch
+      if (filters?.sortBy === 'popular') {
+        query = query.order('clicks', { ascending: false });
+      } else if (filters?.sortBy === 'terlaris') {
+        query = query.order('sales', { ascending: false });
+      } else if (filters?.sortBy === 'harga_termurah') {
+        query = query.order('price', { ascending: true });
+      } else if (filters?.sortBy === 'harga_tertinggi') {
+        query = query.order('price', { ascending: false });
+      } else if (filters?.sortBy !== 'rekomendasi') {
+        // Default sort if none of the above match
+        query = query.order('created_at', { ascending: false });
+      }
+
+      const { data, error } = await query;
+      if (error) throw new Error(error.message);
+
+      // Handle client-side random sort for 'rekomendasi'
+      if (filters?.sortBy === 'rekomendasi') {
+        return shuffleArray(data || []);
+      }
+
+      return data || [];
+    }
+  });
+}
+
 const PRODUCTS_PER_PAGE = 20;
 
 export function useInfiniteProducts(filters?: FilterState) {
