@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { Sparkles, ArrowRight, Search } from 'lucide-react';
+import { Sparkles, ArrowRight, Search, Loader2 } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { FeaturedCarousel } from '@/components/FeaturedCarousel';
 import { ProductCard } from '@/components/ProductCard';
 import { FilterSidebar } from '@/components/FilterSidebar';
 import { Button } from '@/components/ui/button';
-import { useProducts, useLatestProducts, useTrackProductClick } from "@/hooks/useProductQueries";
+import { useInfiniteProducts, useLatestProducts, useTrackProductClick } from "@/hooks/useProductQueries";
 import type { FilterState, Product } from '@/types';
 
 // Assuming FilterState and Product types are defined in @/types/index.ts
@@ -41,8 +41,16 @@ export default function Home() {
 
   // Use the centralized data hooks
   const { data: latestProducts = [], isLoading: isLoadingLatest } = useLatestProducts(4);
-  const { data: allProducts = [], isLoading: isLoadingAll } = useProducts(filters);
+  const { 
+    data, 
+    fetchNextPage, 
+    hasNextPage, 
+    isFetchingNextPage, 
+    isLoading 
+  } = useInfiniteProducts(filters);
   const trackProductClick = useTrackProductClick();
+
+  const allProducts = data?.pages.flatMap(page => page) ?? [];
 
   const handleFiltersChange = (newFilters: FilterState) => {
     setFilters(newFilters);
@@ -146,8 +154,8 @@ export default function Home() {
             
             {/* Products Grid */}
             <div className="lg:col-span-3">
-              {/* Loading state */}
-              {isLoadingAll && (
+              {/* Loading state for initial fetch */}
+              {isLoading && (
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8" data-testid="loading-products">
                   {[...Array(6)].map((_, i) => (
                     <div key={i} className="bg-card rounded-xl border border-border p-4 loading-pulse">
@@ -161,7 +169,7 @@ export default function Home() {
               )}
               
               {/* Products results */}
-              {!isLoadingAll && (
+              {!isLoading && (
                 <div>
                   <div className="flex items-center justify-between mb-6">
                     <span className="text-muted-foreground" data-testid="text-products-count">
@@ -199,6 +207,28 @@ export default function Home() {
                       </Button>
                     </div>
                   )}
+
+                  {/* Load More Button */}
+                  <div className="mt-12 text-center">
+                    {hasNextPage && (
+                      <Button
+                        onClick={() => fetchNextPage()}
+                        disabled={isFetchingNextPage}
+                        className="bg-emerald text-emerald-foreground hover:bg-emerald/90"
+                        data-testid="button-load-more"
+                      >
+                        {isFetchingNextPage ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Memuat...
+                          </>
+                        ) : (
+                          'Muat Lebih Banyak'
+                        )}
+                      </Button>
+                    )}
+                  </div>
+
                 </div>
               )}
             </div>

@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
 import type { Product, FilterState, Categories } from '@/types';
 import { supabase } from '@/lib/supabaseClient';
 
@@ -12,10 +12,12 @@ function shuffleArray<T>(array: T[]): T[] {
   return newArray;
 }
 
-export function useProducts(filters?: FilterState) {
-  return useQuery<Product[]>({
+const PRODUCTS_PER_PAGE = 20;
+
+export function useInfiniteProducts(filters?: FilterState) {
+  return useInfiniteQuery<Product[]>({
     queryKey: ['products', filters],
-    queryFn: async () => {
+    queryFn: async ({ pageParam = 0 }) => {
       let query = supabase.from('products').select('*');
 
       // Apply filters
@@ -46,16 +48,31 @@ export function useProducts(filters?: FilterState) {
         query = query.order('created_at', { ascending: false });
       }
 
+      // Apply pagination
+      const from = pageParam * PRODUCTS_PER_PAGE;
+      const to = from + PRODUCTS_PER_PAGE - 1;
+      query = query.range(from, to);
+
       const { data, error } = await query;
       if (error) throw new Error(error.message);
 
       // Handle client-side random sort for 'rekomendasi'
+      // Note: This will only shuffle the current page, not the whole dataset.
       if (filters?.sortBy === 'rekomendasi') {
         return shuffleArray(data || []);
       }
 
       return data || [];
-    }
+    },
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, allPages) => {
+      // If the last page had fewer products than we requested,
+      // it means we've reached the end.
+      if (lastPage.length < PRODUCTS_PER_PAGE) {
+        return undefined;
+      }
+      return allPages.length;
+    },
   });
 }
 
