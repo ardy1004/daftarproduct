@@ -127,7 +127,7 @@ export function FilterSidebar({ filters, onFiltersChange, showFilters, onToggleF
       </div>
 
       <div className={`lg:block ${showFilters ? 'block' : 'hidden'}`}>
-        <div className="bg-card rounded-xl border border-border p-6 sticky top-24">
+        <div className="bg-card rounded-xl border border-border p-6 sticky top-24 shadow-xl ring-1 ring-black/5 transition-all">
           <div className="flex items-center justify-between mb-6">
             <h3 className="font-bold text-lg">Filter Produk</h3>
             <Button

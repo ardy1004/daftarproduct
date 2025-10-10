@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Share2, Copy, Check, Star } from 'lucide-react';
+import { Share2, Copy, Check, Star, TrendingUp, Award } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -46,6 +46,21 @@ export function ProductCard({ product, onProductClick }: ProductCardProps) {
           alt={product.product_name}
           className="w-full h-48 object-cover"
         />
+        <div className="absolute top-2 left-2 flex flex-col space-y-1">
+          {product.sales && product.sales > 500 && (
+            <span className="px-2 py-0.5 bg-yellow text-yellow-foreground rounded-full text-xs font-semibold shadow-lg flex items-center gap-1">
+              <TrendingUp className="h-3 w-3" />
+              TERLARIS
+            </span>
+          )}
+          {rating > 4.5 && (
+            <span className="px-2 py-0.5 bg-violet text-violet-foreground rounded-full text-xs font-semibold shadow-lg flex items-center gap-1">
+              <Award className="h-3 w-3" />
+              REKOMENDASI
+            </span>
+          )}
+        </div>
+
         <div className="absolute top-2 right-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
