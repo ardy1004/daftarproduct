@@ -119,7 +119,7 @@ export default function Home() {
                 <div>
                   <div className="flex items-center justify-between mb-6">
                     <span className="text-muted-foreground" data-testid="text-products-count">
-                      Menampilkan {allProducts.length} produk
+                      Menampilkan semua produk
                     </span>
                   </div>
                   

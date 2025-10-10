@@ -123,7 +123,9 @@ export function FeaturedCarousel({ onProductClick }: FeaturedCarouselProps) {
                     </div>
                     
                     <h2 className="text-3xl md:text-5xl font-bold mb-2" data-testid={`carousel-product-name-${product.id}`}>
-                      {product.product_name}
+                      {product.product_name.length > 50
+                        ? `${product.product_name.substring(0, 50)}.......`
+                        : product.product_name}
                     </h2>
                     <p className="text-lg text-white/80 mb-4" data-testid={`carousel-product-id-${product.id}`}>
                       {product.product_id}
