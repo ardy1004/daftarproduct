@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { Sparkles, ArrowRight, Search, Loader2 } from 'lucide-react';
+import { Search, Loader2 } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { FeaturedCarousel } from '@/components/FeaturedCarousel';
 import { ProductCard } from '@/components/ProductCard';
 import { FilterSidebar } from '@/components/FilterSidebar';
 import { Button } from '@/components/ui/button';
-import { useInfiniteProducts, useLatestProducts, useTrackProductClick } from "@/hooks/useProductQueries";
+import { useInfiniteProducts, useTrackProductClick } from "@/hooks/useProductQueries";
 import type { FilterState, Product } from '@/types';
 
 // Assuming FilterState and Product types are defined in @/types/index.ts
@@ -40,7 +40,6 @@ export default function Home() {
   const [showFilters, setShowFilters] = useState(false);
 
   // Use the centralized data hooks
-  const { data: latestProducts = [], isLoading: isLoadingLatest } = useLatestProducts(4);
   const { 
     data, 
     fetchNextPage, 
@@ -81,59 +80,6 @@ export default function Home() {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
-        
-        {/* New Products Section */}
-        <section className="mb-12">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold flex items-center">
-              <Sparkles className="h-6 w-6 text-emerald mr-2" />
-              Produk Terbaru
-            </h2>
-            <Button
-              variant="ghost"
-              className="text-emerald hover:text-emerald/80 font-semibold flex items-center"
-              onClick={() => {
-                document.getElementById('all-products')?.scrollIntoView({ 
-                  behavior: 'smooth' 
-                });
-              }}
-              data-testid="button-view-all-products"
-            >
-              Lihat Semua 
-              <ArrowRight className="h-4 w-4 ml-1" />
-            </Button>
-          </div>
-          
-          {isLoadingLatest ? (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {[...Array(4)].map((_, i) => (
-                <div key={i} className="bg-card rounded-xl border border-border p-4 loading-pulse">
-                  <div className="bg-muted h-48 rounded-lg mb-4"></div>
-                  <div className="bg-muted h-4 rounded mb-2"></div>
-                  <div className="bg-muted h-4 rounded w-2/3 mb-4"></div>
-                  <div className="bg-muted h-8 rounded"></div>
-                </div>
-              ))}
-            </div>
-          ) : latestProducts.length > 0 ? (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4" data-testid="grid-latest-products">
-              {latestProducts.map((product) => (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  onProductClick={handleProductClick}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-16">
-              <div className="w-16 h-16 bg-muted rounded-full mb-4 mx-auto flex items-center justify-center">
-                <Sparkles className="h-8 w-8 text-muted-foreground" />
-              </div>
-              <p className="text-muted-foreground">No latest products available</p>
-            </div>
-          )}
-        </section>
 
         {/* Filters and Products Grid */}
         <section id="all-products">
