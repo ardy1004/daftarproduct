@@ -104,7 +104,7 @@ export function FeaturedCarousel({ onProductClick }: FeaturedCarouselProps) {
                 }}
               />
               
-              <div className="relative z-10 container mx-auto px-4 h-full flex items-center">
+              <div className="relative z-10 container mx-auto px-4 h-full flex items-center pb-20 md:pb-0">
                 <div className="grid md:grid-cols-2 gap-8 items-center w-full">
                   <div className="text-white">
                     <div className="flex items-center space-x-2 mb-4">
@@ -189,33 +189,9 @@ export function FeaturedCarousel({ onProductClick }: FeaturedCarouselProps) {
         })}
       </div>
       
-      {/* Navigation Arrows */}
-      {products.length > 1 && (
-        <>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={prevSlide}
-            className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black/20 text-white hover:bg-black/40 rounded-full"
-            data-testid="button-carousel-prev"
-          >
-            <ChevronLeft className="h-6 w-6" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={nextSlide}
-            className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black/20 text-white hover:bg-black/40 rounded-full"
-            data-testid="button-carousel-next"
-          >
-            <ChevronRight className="h-6 w-6" />
-          </Button>
-        </>
-      )}
-      
       {/* Indicators */}
       {products.length > 1 && (
-        <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex space-x-2">
+        <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex space-x-2 z-20">
           {products.map((_, index) => (
             <button
               key={index}
@@ -227,6 +203,30 @@ export function FeaturedCarousel({ onProductClick }: FeaturedCarouselProps) {
             />
           ))}
         </div>
+      )}
+
+      {/* Navigation Arrows */}
+      {products.length > 1 && (
+        <>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={prevSlide}
+            className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black/20 text-white hover:bg-black/40 rounded-full z-20"
+            data-testid="button-carousel-prev"
+          >
+            <ChevronLeft className="h-6 w-6" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={nextSlide}
+            className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black/20 text-white hover:bg-black/40 rounded-full z-20"
+            data-testid="button-carousel-next"
+          >
+            <ChevronRight className="h-6 w-6" />
+          </Button>
+        </>
       )}
     </section>
   );
