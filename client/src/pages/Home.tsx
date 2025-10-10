@@ -8,27 +8,6 @@ import { Button } from '@/components/ui/button';
 import { useInfiniteProducts, useTrackProductClick } from "@/hooks/useProductQueries";
 import type { FilterState, Product } from '@/types';
 
-// Assuming FilterState and Product types are defined in @/types/index.ts
-interface Product {
-  id: string;
-  product_name: string;
-  price: number;
-  image_url: string;
-  affiliate_url: string;
-  sales?: number;
-  is_featured?: boolean;
-  featured_order?: number;
-  created_at?: string;
-}
-
-interface FilterState {
-  search: string;
-  categories: string[];
-  priceMin: number;
-  priceMax: number;
-  sortBy: string;
-}
-
 export default function Home() {
   const [filters, setFilters] = useState<FilterState>({
     search: '',
