@@ -4,6 +4,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { GripVertical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { Product } from '@/types';
+import { formatPrice } from '@/lib/utils';
 
 interface SortableProductItemProps {
   product: Product;
@@ -26,12 +27,18 @@ export function SortableProductItem({ product, onRemove }: SortableProductItemPr
         </button>
         <img 
           src={product.image_url || ''} 
-          alt={product.productName}
+          alt={product.product_name}
           className="w-16 h-16 rounded-lg object-cover"
         />
         <div>
-          <h3 className="font-medium">{product.productName}</h3>
-          <p className="text-sm text-muted-foreground">Current Order: {product.featured_order || 0}</p>
+          <h3 className="font-medium">{product.product_name}</h3>
+          <div className="text-sm text-muted-foreground flex items-center gap-2 flex-wrap">
+            <span>ID: {product.product_id || 'N/A'}</span>
+            <span className="text-border">|</span>
+            <span className="font-semibold text-emerald">{formatPrice(product.price)}</span>
+            <span className="text-border">|</span>
+            <span>Current Order: {product.featured_order ?? 0}</span>
+          </div>
         </div>
       </div>
       <Button 

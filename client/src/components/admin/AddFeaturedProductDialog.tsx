@@ -1,4 +1,6 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogContent,
@@ -6,7 +8,9 @@ import {
   DialogTitle,
   DialogDescription
 } from "@/components/ui/dialog";
+import { Search } from "lucide-react";
 import { useNonFeaturedProducts } from "@/hooks/useProductQueries";
+import { formatPrice } from "@/lib/utils";
 import type { Product } from "@/types";
 
 interface AddFeaturedProductDialogProps {
@@ -16,7 +20,12 @@ interface AddFeaturedProductDialogProps {
 }
 
 export function AddFeaturedProductDialog({ isOpen, onOpenChange, onAddProduct }: AddFeaturedProductDialogProps) {
+  const [searchQuery, setSearchQuery] = useState('');
   const { data: products = [], isLoading } = useNonFeaturedProducts();
+
+  const filteredProducts = products.filter(product => 
+    product.product_name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -27,20 +36,36 @@ export function AddFeaturedProductDialog({ isOpen, onOpenChange, onAddProduct }:
             Select a product to add to the featured carousel.
           </DialogDescription>
         </DialogHeader>
-        <div className="max-h-[60vh] overflow-y-auto">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            type="search"
+            placeholder="Search products to feature..."
+            className="pl-9"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+        <div className="max-h-[50vh] overflow-y-auto pr-2">
           {isLoading ? (
             <p>Loading products...</p>
-          ) : products.length > 0 ? (
+          ) : filteredProducts.length > 0 ? (
             <div className="space-y-4 py-4">
-              {products.map((product) => (
+              {filteredProducts.map((product) => (
                 <div key={product.id} className="flex items-center justify-between p-3 bg-muted rounded-lg">
                   <div className="flex items-center space-x-4">
                     <img 
                       src={product.image_url || ''} 
                       alt={product.product_name}
-                      className="w-12 h-12 rounded-md object-cover"
+                      className="w-16 h-16 rounded-md object-cover"
                     />
-                    <h3 className="font-medium">{product.product_name}</h3>
+                    <div>
+                      <h3 className="font-medium">{product.product_name}</h3>
+                      <div className="text-xs text-muted-foreground flex items-center gap-2">
+                        <span>ID: {product.product_id || 'N/A'}</span>
+                        <span className="font-semibold text-emerald">{formatPrice(product.price)}</span>
+                      </div>
+                    </div>
                   </div>
                   <Button size="sm" onClick={() => onAddProduct(product)}>
                     Add

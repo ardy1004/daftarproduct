@@ -20,13 +20,13 @@ import type { Product } from "@/types";
 
 // Define the form schema using Zod
 const formSchema = z.object({
-  productName: z.string().min(3, "Product name must be at least 3 characters"),
+  product_name: z.string().min(3, "Product name must be at least 3 characters"),
   category: z.string().min(2, "Category is required"),
   price: z.coerce.number().min(0, "Price must be a positive number"),
   sales: z.coerce.number().min(0, "Sales must be a positive number").optional(),
-  affiliateUrl: z.string().url("Must be a valid URL"),
+  affiliate_url: z.string().url("Must be a valid URL"),
   image_url: z.string().url("Must be a valid URL"),
-  is_featured: z.boolean().default(false),
+  is_featured: z.boolean().optional().default(false),
   featured_order: z.coerce.number().optional(),
   rating: z.coerce.number().optional(),
 });
@@ -41,11 +41,11 @@ export function ProductForm({ product, onSubmit, isSubmitting }: ProductFormProp
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      productName: product?.productName || "",
+      product_name: product?.product_name || "",
       category: product?.category || "",
       price: product?.price || 0,
       sales: product?.sales || 0,
-      affiliateUrl: product?.affiliateUrl || "",
+      affiliate_url: product?.affiliate_url || "",
       image_url: product?.image_url || "",
       is_featured: product?.is_featured || false,
       featured_order: product?.featured_order || 0,
@@ -57,7 +57,7 @@ export function ProductForm({ product, onSubmit, isSubmitting }: ProductFormProp
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <FormField
           control={form.control}
-          name="productName"
+          name="product_name"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Product Name</FormLabel>
@@ -111,7 +111,7 @@ export function ProductForm({ product, onSubmit, isSubmitting }: ProductFormProp
         />
         <FormField
           control={form.control}
-          name="image_url"
+          name="affiliate_url"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Image URL</FormLabel>

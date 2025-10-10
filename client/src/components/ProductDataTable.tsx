@@ -62,6 +62,7 @@ export function ProductDataTable({
                 aria-label="Select all"
               />
             </TableHead>
+            <TableHead>Product ID</TableHead>
             <TableHead>Name</TableHead>
             <TableHead>Category</TableHead>
             <TableHead>Rating</TableHead>
@@ -82,6 +83,7 @@ export function ProductDataTable({
                     aria-label={`Select row ${product.id}`}
                   />
                 </TableCell>
+                <TableCell className="font-mono text-xs">{product.product_id || 'N/A'}</TableCell>
                 <TableCell className="font-medium">{product.product_name}</TableCell>
                 <TableCell>{product.category}</TableCell>
                 <TableCell>{product.rating || 'N/A'}</TableCell>
@@ -116,7 +118,7 @@ export function ProductDataTable({
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={6} className="h-24 text-center">
+              <TableCell colSpan={7} className="h-24 text-center">
                 No results.
               </TableCell>
             </TableRow>

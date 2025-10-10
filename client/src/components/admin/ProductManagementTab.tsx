@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import * as z from "zod";
-import { Plus, Upload, Trash2, Star, Edit, Download } from 'lucide-react';
+import { Plus, Upload, Trash2, Star, Edit, Download, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -33,6 +33,7 @@ import { BulkUpdateDialog } from './BulkUpdateDialog';
 import type { Product } from '@/types';
 import { CSVLink } from 'react-csv';
 import Papa from 'papaparse';
+import { Input } from '@/components/ui/input';
 
 const productFormSchema = z.object({
   product_name: z.string().min(3),
@@ -54,6 +55,7 @@ export function ProductManagementTab() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
   const [csvExportData, setCsvExportData] = useState<any[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const csvLinkRef = useRef<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -61,6 +63,10 @@ export function ProductManagementTab() {
   const addProduct = useAddProduct();
   const updateProduct = useUpdateProduct();
   const deleteProduct = useDeleteProduct();
+
+  const filteredProducts = products.filter(product =>
+    product.product_name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const handleAddClick = () => {
     setSelectedProduct(null);
@@ -239,7 +245,18 @@ export function ProductManagementTab() {
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
             <span>Product Management</span>
-            <div className="flex space-x-2">
+            <div className="flex items-center space-x-2">
+              <div className="relative">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="search"
+                  placeholder="Search products..."
+                  className="pl-8 sm:w-[300px]"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+
               {selectedProductIds.length > 0 ? (
                 <>
                   <Button variant="destructive" onClick={handleBulkDeleteClick}>
@@ -268,7 +285,7 @@ export function ProductManagementTab() {
             <p>Loading products...</p>
           ) : (
             <ProductDataTable 
-              products={products} 
+              products={filteredProducts} 
               selectedProductIds={selectedProductIds}
               onSelectionChange={setSelectedProductIds}
               onEdit={handleEditProduct} 

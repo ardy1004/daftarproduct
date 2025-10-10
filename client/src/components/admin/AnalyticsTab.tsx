@@ -22,7 +22,10 @@ export function AnalyticsTab() {
   };
 
   const handleReset = () => {
+    // Set the period back to 'all'
     setPeriod('all');
+    // Explicitly refetch to ensure the latest data is loaded, fulfilling the "Refresh" action.
+    // TanStack Query is smart enough to not cause a double-fetch if the query key hasn't changed.
     refetch();
   };
 
