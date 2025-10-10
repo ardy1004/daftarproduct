@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { Search, Loader2 } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { FeaturedCarousel } from '@/components/FeaturedCarousel';
@@ -203,10 +204,10 @@ export default function Home() {
             <div>
               <h4 className="font-semibold mb-4">Bantuan</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><a href="#" className="hover:text-emerald transition-colors">FAQ</a></li>
-                <li><a href="#" className="hover:text-emerald transition-colors">Cara Berbelanja</a></li>
-                <li><a href="#" className="hover:text-emerald transition-colors">Kebijakan Privasi</a></li>
-                <li><a href="#" className="hover:text-emerald transition-colors">Syarat & Ketentuan</a></li>
+                <li><Link to="/faq" className="hover:text-emerald transition-colors">FAQ</Link></li>
+                <li><Link to="/how-to-shop" className="hover:text-emerald transition-colors">Cara Berbelanja</Link></li>
+                <li><Link to="/privacy-policy" className="hover:text-emerald transition-colors">Kebijakan Privasi</Link></li>
+                <li><Link to="/terms-and-conditions" className="hover:text-emerald transition-colors">Syarat & Ketentuan</Link></li>
               </ul>
             </div>
             

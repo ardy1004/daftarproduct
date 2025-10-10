@@ -40,7 +40,7 @@ export function FeaturedManagementTab() {
   const handleRemoveFeatured = (product: Product) => {
     updateProduct.mutate({ id: product.id, is_featured: false }, {
       onSuccess: () => {
-        toast({ description: `"${product.productName}" has been removed from featured.` });
+        toast({ description: `"${product.product_name}" has been removed from featured.` });
       },
       onError: (error) => {
         toast({ variant: "destructive", title: "Error", description: error.message });
@@ -53,7 +53,7 @@ export function FeaturedManagementTab() {
     const maxOrder = Math.max(...featuredProducts.map(p => p.featured_order || 0), 0);
     updateProduct.mutate({ id: product.id, is_featured: true, featured_order: maxOrder + 1 }, {
       onSuccess: () => {
-        toast({ description: `"${product.productName}" has been added to featured.` });
+        toast({ description: `"${product.product_name}" has been added to featured.` });
       },
       onError: (error) => {
         toast({ variant: "destructive", title: "Error", description: error.message });

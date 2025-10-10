@@ -98,12 +98,12 @@ export function ProductForm({ product, onSubmit, isSubmitting }: ProductFormProp
         </div>
         <FormField
           control={form.control}
-          name="affiliateUrl"
+          name="image_url"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Affiliate URL</FormLabel>
+              <FormLabel>Image URL</FormLabel>
               <FormControl>
-                <Input placeholder="https://example.com/product/123" {...field} />
+                <Input placeholder="https://example.com/image.jpg" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -114,9 +114,9 @@ export function ProductForm({ product, onSubmit, isSubmitting }: ProductFormProp
           name="affiliate_url"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Image URL</FormLabel>
+              <FormLabel>Affiliate URL</FormLabel>
               <FormControl>
-                <Input placeholder="https://example.com/image.jpg" {...field} />
+                <Input placeholder="https://example.com/product/123" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

@@ -70,16 +70,16 @@ export function FeaturedCarousel({ onProductClick }: FeaturedCarouselProps) {
     <section className="relative h-96 md:h-[500px] overflow-hidden bg-gradient-to-br from-emerald/10 to-metallic/10">
       <div className="absolute inset-0">
         {products.map((product, index) => {
-          const discount = product.original_price 
-            ? calculateDiscount(product.price, product.original_price)
+          const discount = product.original_price
+            ? calculateDiscount(parseFloat(product.price), parseFloat(product.original_price))
             : 0;
-          const rating = parseFloat(product.rating || '0');
-          
+          const rating = parseFloat(product.rating?.toString() || '0');
+
           // Construct optimized image URLs
           const optimizedBgUrl = product.image_url
             ? `${product.image_url}?width=1200&quality=80`
             : 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=1200&h=600&fit=crop&crop=center';
-          
+
           const optimizedImageUrl = product.image_url
             ? `${product.image_url}?width=600&quality=85`
             : 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=600&h=600&fit=crop&crop=center';
@@ -88,22 +88,22 @@ export function FeaturedCarousel({ onProductClick }: FeaturedCarouselProps) {
             <div
               key={product.id}
               className={`absolute inset-0 w-full h-full transition-all duration-500 ${
-                currentSlide === index 
-                  ? 'opacity-100 transform translate-x-0' 
-                  : index < currentSlide 
+                currentSlide === index
+                  ? 'opacity-100 transform translate-x-0'
+                  : index < currentSlide
                     ? 'opacity-0 transform -translate-x-full'
                     : 'opacity-0 transform translate-x-full'
               }`}
               data-testid={`carousel-slide-${index}`}
             >
               {/* Background image with overlay */}
-              <div 
+              <div
                 className="absolute inset-0 bg-cover bg-center"
                 style={{
                   backgroundImage: `linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.6)), url('${optimizedBgUrl}')`
                 }}
               />
-              
+
               <div className="relative z-10 container mx-auto px-4 h-full flex items-center pb-20 md:pb-0">
                 <div className="grid md:grid-cols-2 gap-8 items-center w-full">
                   <div className="text-white">
@@ -121,16 +121,14 @@ export function FeaturedCarousel({ onProductClick }: FeaturedCarouselProps) {
                         </span>
                       )}
                     </div>
-                    
-                    <h2 className="text-3xl md:text-5xl font-bold mb-2" data-testid={`carousel-product-name-${product.id}`}>
-                      {product.product_name.length > 50
-                        ? `${product.product_name.substring(0, 50)}.......`
-                        : product.product_name}
+
+                    <h2 className="text-3xl md:text-5xl font-bold mb-2 line-clamp-2" title={product.product_name} data-testid={`carousel-product-name-${product.id}`}>
+                      {product.product_name}
                     </h2>
                     <p className="text-lg text-white/80 mb-4" data-testid={`carousel-product-id-${product.id}`}>
                       {product.product_id}
                     </p>
-                    
+
                     <div className="flex items-center space-x-4 mb-6">
                       <span className="text-2xl md:text-3xl font-bold text-yellow" data-testid={`carousel-price-${product.id}`}>
                         {formatPrice(product.price)}

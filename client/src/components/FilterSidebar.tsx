@@ -84,14 +84,14 @@ export function FilterSidebar({ filters, onFiltersChange, showFilters, onToggleF
     }
 
     return (
-      categoriesData?.length > 0 && (
+      categoriesData?.categories?.length > 0 && (
         <div className="mb-8">
           <h4 className="font-semibold mb-4 flex items-center">
             <Folder className="h-4 w-4 text-emerald mr-2" />
             Kategori
           </h4>
           <div className="space-y-3">
-            {categoriesData.map((category) => (
+            {categoriesData.categories.map((category) => (
               <div key={category} className="flex items-center space-x-3">
                 <Checkbox
                   id={`category-${category}`}

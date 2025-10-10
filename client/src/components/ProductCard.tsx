@@ -18,33 +18,40 @@ interface ProductCardProps {
 export function ProductCard({ product, onProductClick }: ProductCardProps) {
   const { toast } = useToast();
   const [isCopied, setIsCopied] = useState(false);
-  const rating = parseFloat(product.rating || '0');
+  const rating = parseFloat(product.rating?.toString() || '0');
 
   const handleCopyLink = () => {
-    navigator.clipboard.writeText(product.affiliate_url);
-    toast({
-      title: 'Tautan disalin!',
-      description: 'Tautan produk telah disalin ke clipboard.',
-    });
-    setIsCopied(true);
-    setTimeout(() => setIsCopied(false), 2000); // Reset icon after 2 seconds
+    if (product.affiliate_url) {
+      navigator.clipboard.writeText(product.affiliate_url);
+      toast({
+        title: 'Tautan disalin!',
+        description: 'Tautan produk telah disalin ke clipboard.',
+      });
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000); // Reset icon after 2 seconds
+    }
   };
 
-  const shareUrl = encodeURIComponent(product.affiliate_url);
+  const shareUrl = product.affiliate_url ? encodeURIComponent(product.affiliate_url) : '';
   const shareText = encodeURIComponent(`Cek produk keren ini: ${product.product_name}`);
 
   const handleProductRedirect = () => {
     onProductClick(product.id);
-    window.open(product.affiliate_url, '_blank', 'noopener,noreferrer');
+    if (product.affiliate_url) {
+      window.open(product.affiliate_url, '_blank', 'noopener,noreferrer');
+    }
   };
 
   return (
-    <div className="bg-card rounded-xl border border-border overflow-hidden shadow-sm hover:shadow-lg transition-shadow duration-300 group flex flex-col">
-      <div className="relative">
+    <div className="bg-card rounded-xl border border-border overflow-hidden shadow-sm hover:shadow-lg transition-shadow duration-300 group flex flex-col product-card">
+      <div className="relative overflow-hidden">
         <img
           src={product.image_url || 'https://via.placeholder.com/300'}
           alt={product.product_name}
-          className="w-full h-48 object-cover"
+          className="w-full h-48 object-cover group-hover:scale-110 transition-transform duration-300"
+          onError={(e) => {
+            e.currentTarget.src = 'https://via.placeholder.com/300';
+          }}
         />
         <div className="absolute top-2 left-2 flex flex-col space-y-1">
           {product.sales && product.sales > 500 && (
@@ -147,7 +154,7 @@ export function ProductCard({ product, onProductClick }: ProductCardProps) {
                 style: 'currency',
                 currency: 'IDR',
                 minimumFractionDigits: 0,
-              }).format(product.price)}
+              }).format(parseFloat(product.price))}
             </p>
           </div>
           {product.sales && (
