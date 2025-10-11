@@ -7,13 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { useSettings, useUpdateSettings } from "@/hooks/useSettings";
+import { useSettings, useUpdateSettings } from "@/hooks/useSettings"; // Assuming BarChart3 is not used elsewhere
 import { useToast } from "@/hooks/use-toast";
-import { Facebook, MonitorSmartphone, BarChart3 } from 'lucide-react';
+import { Facebook } from 'lucide-react';
 
 const settingsFormSchema = z.object({
   facebook_pixel_id: z.string().optional(),
-  google_analytics_id: z.string().optional(),
 });
 
 type SettingsFormValues = z.infer<typeof settingsFormSchema>;
@@ -27,7 +26,6 @@ export function SettingsTab() {
     resolver: zodResolver(settingsFormSchema),
     defaultValues: {
       facebook_pixel_id: '',
-      google_analytics_id: '',
     },
   });
 
@@ -35,7 +33,6 @@ export function SettingsTab() {
     if (settings) {
       form.reset({
         facebook_pixel_id: settings.facebook_pixel_id || '',
-        google_analytics_id: settings.google_analytics_id || '',
       });
     }
   }, [settings, form]);
@@ -79,26 +76,6 @@ export function SettingsTab() {
                     </FormControl>
                     <FormDescription>
                       This ID will be used to track events with Facebook Pixel.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="google_analytics_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center">
-                      <BarChart3 className="h-4 w-4 mr-2" />
-                      Google Analytics ID
-                    </FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter your Google Analytics ID (e.g., G-XXXXXXXXXX)" {...field} />
-                    </FormControl>
-                    <FormDescription>
-                      This ID will be used to track events with Google Analytics 4.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>

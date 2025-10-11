@@ -27,7 +27,6 @@ export interface Settings {
   showCategoryFilter: boolean | null;
   updatedAt: string | null;
   facebook_pixel_id?: string | null;
-  google_analytics_id?: string | null;
 }
 
 export interface FilterState {
