@@ -131,6 +131,9 @@ export function ProductCard({ product, onProductClick }: ProductCardProps) {
         <h3 className="font-semibold text-base leading-snug truncate mb-2" title={product.product_name}>
           {product.product_name}
         </h3>
+        <p className="text-xs text-muted-foreground mb-2" data-testid={`product-id-${product.id}`}>
+          ID: {product.product_id || 'N/A'}
+        </p>
 
         {rating > 0 && (
           <div className="flex items-center mb-2">
@@ -166,7 +169,7 @@ export function ProductCard({ product, onProductClick }: ProductCardProps) {
       <div className="p-4 pt-0">
         <Button
           onClick={handleProductRedirect}
-          className="w-full bg-emerald text-emerald-foreground hover:bg-emerald/90 transition-all duration-200 transform group-hover:scale-105"
+          className="w-full bg-gradient-to-r from-emerald to-violet text-white font-semibold shadow-md hover:shadow-lg hover:brightness-110 active:shadow-inner transition-all duration-200 transform group-hover:scale-105"
         >
           Lihat Produk
         </Button>
