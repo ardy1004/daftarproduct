@@ -6,6 +6,7 @@ export function TrackingScripts() {
   const { data: settings } = useSettings();
 
   const fbPixelId = settings?.facebook_pixel_id;
+  const gaId = settings?.google_analytics_id;
 
   useEffect(() => {
     if (fbPixelId && !window.fbq) {
@@ -25,6 +26,21 @@ export function TrackingScripts() {
 
   return (
     <Helmet>
+      {/* Google Analytics Script */}
+      {gaId && (
+        <script async src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}></script>
+      )}
+      {gaId && (
+        <script>
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', '${gaId}');
+          `}
+        </script>
+      )}
+
       {/* Facebook Pixel Script - Standard Implementation */}
       {fbPixelId && (
         <noscript>{`<img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=${fbPixelId}&ev=PageView&noscript=1"/>`}</noscript>
