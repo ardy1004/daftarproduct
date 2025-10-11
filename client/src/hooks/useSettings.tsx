@@ -6,6 +6,7 @@ export interface Settings {
   show_category_filter: boolean;
   updated_at: string;
   facebook_pixel_id?: string | null;
+  google_analytics_id?: string | null;
 }
 
 // The settings row has a fixed ID for simplicity, ensure this row exists in your DB.

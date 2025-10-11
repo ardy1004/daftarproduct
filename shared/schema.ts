@@ -30,6 +30,8 @@ export const productAnalytics = pgTable("product_analytics", {
 export const settings = pgTable("settings", {
   id: uuid("id").defaultRandom().primaryKey(),
   showCategoryFilter: boolean("show_category_filter").default(true),
+  facebookPixelId: text("facebook_pixel_id"),
+  googleAnalyticsId: text("google_analytics_id"),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
 });
 
