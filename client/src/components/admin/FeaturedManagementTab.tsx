@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Star } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useFeaturedProducts } from '@/hooks/useProductQueries';
@@ -26,6 +27,7 @@ import { SortableProductItem } from './SortableProductItem';
 
 export function FeaturedManagementTab() {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const { data: featuredProducts = [], isLoading } = useFeaturedProducts();
   const updateProduct = useUpdateProduct();
@@ -71,11 +73,16 @@ export function FeaturedManagementTab() {
       const reorderedProducts = arrayMove(featuredProducts, oldIndex, newIndex);
 
       // Update the featured_order for each product
-      reorderedProducts.forEach((product, index) => {
+      const updatePromises = reorderedProducts.map((product, index) => {
         // Only call mutate if the order actually changed
         if (product.featured_order !== index) {
-          updateProduct.mutate({ id: product.id, featured_order: index });
+          return updateProduct.mutateAsync({ id: product.id, featured_order: index });
         }
+        return Promise.resolve();
+      });
+
+      Promise.all(updatePromises).then(() => {
+        queryClient.invalidateQueries({ queryKey: ['featured-products'] });
       });
 
       toast({ title: "Success", description: "Product order updated." });

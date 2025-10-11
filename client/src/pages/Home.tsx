@@ -175,9 +175,7 @@ export default function Home() {
                   DAFTAR PRODUCT
                 </h3>
               </div>
-              <p className="text-muted-foreground text-sm mb-4">
-                Platform e-commerce modern dengan teknologi terdepan untuk pengalaman berbelanja terbaik.
-              </p>
+          <p className="text-muted-foreground text-sm mb-4">Platform untuk mencari dan menemukan produk-produk terbaik dari berbagai kategori.</p>
               <div className="flex space-x-3">
                 <a href="#" className="w-8 h-8 bg-emerald text-white rounded-lg flex items-center justify-center hover:bg-emerald/80 transition-colors">
                   <i className="fab fa-facebook-f text-sm"></i>
