@@ -31,7 +31,7 @@ export const settings = pgTable("settings", {
   id: uuid("id").defaultRandom().primaryKey(),
   showCategoryFilter: boolean("show_category_filter").default(true),
   facebookPixelId: text("facebook_pixel_id"),
-  googleAnalyticsId: text("google_analytics_id"), // This line was correct, re-confirming its presence.
+  google_analytics_id: text("google_analytics_id"),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
 });
 
