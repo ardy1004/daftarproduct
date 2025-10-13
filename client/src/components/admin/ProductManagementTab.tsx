@@ -65,6 +65,10 @@ export function ProductManagementTab() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: products = [], isLoading: isLoadingProducts } = useProducts();
+
+  // Debug logging to check total products
+  console.log('Total products in database:', products.length);
+  console.log('First 5 products:', products.slice(0, 5).map(p => ({ id: p.id, name: p.product_name, productId: p.product_id })));
   const addProduct = useAddProduct();
   const updateProduct = useUpdateProduct();
   const deleteProduct = useDeleteProduct();
