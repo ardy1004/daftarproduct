@@ -69,7 +69,8 @@ export function ProductManagementTab() {
   const deleteProduct = useDeleteProduct();
 
   const filteredProducts = products.filter(product =>
-    product.product_name.toLowerCase().includes(searchQuery.toLowerCase())
+    product.product_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (product.product_id && product.product_id.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   const handleAddClick = () => {
