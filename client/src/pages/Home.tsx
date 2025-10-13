@@ -31,6 +31,20 @@ export default function Home() {
 
   const allProducts = data?.pages.flatMap(page => page) ?? [];
 
+  // Debug logging to check if specific product exists
+  const specificProduct = allProducts.find(p => p.product_id === 'ACX.G-018');
+  console.log('Product ACX.G-018 found in frontend:', specificProduct);
+  console.log('Total products in frontend:', allProducts.length);
+  console.log('First 5 products in frontend:', allProducts.slice(0, 5).map(p => ({ id: p.product_id, name: p.product_name })));
+
+  // Check if product is visible in current display
+  const isProductVisible = allProducts.some(p => p.product_id === 'ACX.G-018');
+  if (isProductVisible) {
+    console.log('✅ Product ACX.G-018 is visible in frontend!');
+  } else {
+    console.log('❌ Product ACX.G-018 is NOT visible in frontend yet. Try scrolling to load more products.');
+  }
+
   const handleFiltersChange = (newFilters: FilterState) => {
     setFilters(newFilters);
   };

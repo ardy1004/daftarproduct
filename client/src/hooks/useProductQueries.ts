@@ -122,21 +122,25 @@ const PRODUCTS_PER_PAGE = 20;
 
 export function useInfiniteProducts(filters?: FilterState) {
   return useInfiniteQuery<Product[]>({
-    queryKey: ['products', filters],
+    queryKey: ['products-infinite', filters], // Changed key to avoid conflicts
     queryFn: async ({ pageParam = 0 }) => {
+      console.log('Fetching infinite products batch:', pageParam);
+
+      // For infinite scroll, we still use pagination but with larger batches
+      // to ensure all products can be loaded eventually
+      const BATCH_SIZE = 100; // Smaller batches for infinite scroll
+      const from = pageParam * BATCH_SIZE;
+      const to = from + BATCH_SIZE - 1;
+
       let query = supabase.from('products').select('*');
 
       // Apply filters
       if (filters?.search) {
-        // Split search query into individual terms for better matching
         const searchTerms = filters.search.toLowerCase().trim().split(/\s+/).filter(term => term.length > 0);
         if (searchTerms.length > 0) {
-          // Use AND logic: all terms must be present in product_name
-          // For multiple terms, we need to combine them properly
           if (searchTerms.length === 1) {
             query = query.ilike('product_name', `%${searchTerms[0]}%`);
           } else {
-            // For multiple terms, use AND logic by chaining ilike conditions
             searchTerms.forEach(term => {
               query = query.ilike('product_name', `%${term}%`);
             });
@@ -153,7 +157,7 @@ export function useInfiniteProducts(filters?: FilterState) {
         query = query.lte('price', filters.priceMax);
       }
 
-      // Apply sorting, except for 'rekomendasi' which is handled post-fetch
+      // Apply sorting
       if (filters?.sortBy === 'popular') {
         query = query.order('clicks', { ascending: false });
       } else if (filters?.sortBy === 'terlaris') {
@@ -162,105 +166,33 @@ export function useInfiniteProducts(filters?: FilterState) {
         query = query.order('price', { ascending: true });
       } else if (filters?.sortBy === 'harga_tertinggi') {
         query = query.order('price', { ascending: false });
-      } else if (filters?.sortBy !== 'rekomendasi') {
-        // Default sort if none of the above match
+      } else if (filters?.sortBy === 'rekomendasi') {
+        // For rekomendasi, we'll shuffle client-side after fetching
+        query = query.order('created_at', { ascending: false });
+      } else {
         query = query.order('created_at', { ascending: false });
       }
 
       // Apply pagination
-      const from = pageParam * PRODUCTS_PER_PAGE;
-      const to = from + PRODUCTS_PER_PAGE - 1;
       query = query.range(from, to);
 
-      const { data, error, count } = await query;
+      const { data, error } = await query;
       if (error) throw new Error(error.message);
 
-      console.log('Query result count:', count);
-      console.log('Data length:', data?.length);
+      let resultData = data || [];
 
-      // Always try to fetch all products for admin dashboard
-      // Supabase has a default limit of 1000 rows per query, so we need a workaround
-      console.log('Attempting to fetch all products for admin dashboard');
-
-      // Use a simpler approach: just fetch everything without any filters first
-      // Then apply client-side filtering if needed
-      const { data: allData, error: allError } = await supabase
-        .from('products')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (allError) {
-        console.error('Error fetching all products:', allError);
-        throw new Error(allError.message);
-      }
-
-      console.log('All products fetched:', allData?.length);
-
-      // Apply client-side filtering if there are filters
-      let filteredData = allData || [];
-
-      if (filters?.search) {
-        const searchTerms = filters.search.toLowerCase().trim().split(/\s+/).filter(term => term.length > 0);
-        if (searchTerms.length > 0) {
-          filteredData = filteredData.filter(product => {
-            const productName = product.product_name?.toLowerCase() || '';
-            return searchTerms.every(term => productName.includes(term));
-          });
-        }
-      }
-
-      if (filters?.categories && filters.categories.length > 0) {
-        filteredData = filteredData.filter(product =>
-          filters.categories.includes(product.category)
-        );
-      }
-
-      if (filters?.priceMin !== undefined) {
-        filteredData = filteredData.filter(product =>
-          parseFloat(product.price) >= filters.priceMin!
-        );
-      }
-
-      if (filters?.priceMax !== undefined) {
-        filteredData = filteredData.filter(product =>
-          parseFloat(product.price) <= filters.priceMax!
-        );
-      }
-
-      // Apply sorting
-      if (filters?.sortBy === 'popular') {
-        filteredData.sort((a, b) => (b.clicks || 0) - (a.clicks || 0));
-      } else if (filters?.sortBy === 'terlaris') {
-        filteredData.sort((a, b) => (b.sales || 0) - (a.sales || 0));
-      } else if (filters?.sortBy === 'harga_termurah') {
-        filteredData.sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
-      } else if (filters?.sortBy === 'harga_tertinggi') {
-        filteredData.sort((a, b) => parseFloat(b.price) - parseFloat(a.price));
-      } else if (filters?.sortBy === 'rekomendasi') {
-        // Shuffle for rekomendasi
-        for (let i = filteredData.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [filteredData[i], filteredData[j]] = [filteredData[j], filteredData[i]];
-        }
-      }
-      // Default sort is already applied (created_at desc)
-
-      console.log('Filtered data length:', filteredData.length);
-      return filteredData;
-
-      // Handle client-side random sort for 'rekomendasi'
-      // Note: This will only shuffle the current page, not the whole dataset.
+      // Handle rekomendasi shuffling
       if (filters?.sortBy === 'rekomendasi') {
-        return shuffleArray(data || []);
+        resultData = shuffleArray(resultData);
       }
 
-      return data || [];
+      console.log(`Infinite batch ${pageParam}: fetched ${resultData.length} products (range ${from}-${to})`);
+      return resultData;
     },
     initialPageParam: 0,
     getNextPageParam: (lastPage, allPages) => {
-      // If the last page had fewer products than we requested,
-      // it means we've reached the end.
-      if (lastPage.length < PRODUCTS_PER_PAGE) {
+      // If the last page had fewer products than we requested, we've reached the end
+      if (lastPage.length < 100) {
         return undefined;
       }
       return allPages.length;
