@@ -12,64 +12,109 @@ function shuffleArray<T>(array: T[]): T[] {
   return newArray;
 }
 
-// This is the original function, restored for use in admin panels.
 export function useProducts(filters?: FilterState) {
   return useQuery<Product[]>({
-    queryKey: ['products', filters],
+    queryKey: ['products-admin', filters], // Changed query key to avoid cache conflicts
     queryFn: async () => {
-      let query = supabase.from('products').select('*', { count: 'exact' });
+      console.log('Fetching all products for admin dashboard...');
 
-      // Apply filters
-      if (filters?.search) {
-        // Split search query into individual terms for better matching
-        const searchTerms = filters.search.toLowerCase().trim().split(/\s+/).filter(term => term.length > 0);
-        if (searchTerms.length > 0) {
-          // Use AND logic: all terms must be present in product_name
-          // For multiple terms, we need to combine them properly
-          if (searchTerms.length === 1) {
-            query = query.ilike('product_name', `%${searchTerms[0]}%`);
-          } else {
-            // For multiple terms, use AND logic by chaining ilike conditions
-            searchTerms.forEach(term => {
-              query = query.ilike('product_name', `%${term}%`);
-            });
-          }
+      // Supabase has a default limit of 1000 rows. We need to fetch in batches.
+      const BATCH_SIZE = 1000;
+      let allProducts: Product[] = [];
+      let offset = 0;
+      let hasMore = true;
+
+      while (hasMore) {
+        console.log(`Fetching batch with offset ${offset}...`);
+
+        const { data, error } = await supabase
+          .from('products')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .range(offset, offset + BATCH_SIZE - 1);
+
+        if (error) {
+          console.error('Error fetching products batch:', error);
+          throw new Error(error.message);
+        }
+
+        const batchData = data || [];
+        console.log(`Batch ${Math.floor(offset / BATCH_SIZE) + 1}: fetched ${batchData.length} products`);
+
+        allProducts = [...allProducts, ...batchData];
+
+        // If we got less than BATCH_SIZE, we've reached the end
+        if (batchData.length < BATCH_SIZE) {
+          hasMore = false;
+        } else {
+          offset += BATCH_SIZE;
+        }
+
+        // Safety check to prevent infinite loops
+        if (offset > 10000) { // Max 10k products
+          console.warn('Reached maximum offset limit, stopping fetch');
+          hasMore = false;
         }
       }
-      if (filters?.categories && filters.categories.length > 0) {
-        query = query.in('category', filters.categories);
+
+      console.log('Total products fetched across all batches:', allProducts.length);
+
+      // Apply client-side filtering and sorting
+      let processedData = allProducts;
+
+      // Apply search filter
+      if (filters?.search) {
+        const searchTerms = filters.search.toLowerCase().trim().split(/\s+/).filter(term => term.length > 0);
+        if (searchTerms.length > 0) {
+          processedData = processedData.filter(product => {
+            const productName = product.product_name?.toLowerCase() || '';
+            return searchTerms.every(term => productName.includes(term));
+          });
+        }
       }
+
+      // Apply category filter
+      if (filters?.categories && filters.categories.length > 0) {
+        processedData = processedData.filter(product =>
+          filters.categories!.includes(product.category)
+        );
+      }
+
+      // Apply price filters
       if (filters?.priceMin !== undefined) {
-        query = query.gte('price', filters.priceMin);
+        processedData = processedData.filter(product =>
+          parseFloat(product.price) >= filters.priceMin!
+        );
       }
       if (filters?.priceMax !== undefined) {
-        query = query.lte('price', filters.priceMax);
+        processedData = processedData.filter(product =>
+          parseFloat(product.price) <= filters.priceMax!
+        );
       }
 
-      // Apply sorting, except for 'rekomendasi' which is handled post-fetch
+      // Apply sorting
       if (filters?.sortBy === 'popular') {
-        query = query.order('clicks', { ascending: false });
+        processedData.sort((a, b) => (b.clicks || 0) - (a.clicks || 0));
       } else if (filters?.sortBy === 'terlaris') {
-        query = query.order('sales', { ascending: false });
+        processedData.sort((a, b) => (b.sales || 0) - (a.sales || 0));
       } else if (filters?.sortBy === 'harga_termurah') {
-        query = query.order('price', { ascending: true });
+        processedData.sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
       } else if (filters?.sortBy === 'harga_tertinggi') {
-        query = query.order('price', { ascending: false });
-      } else if (filters?.sortBy !== 'rekomendasi') {
-        // Default sort if none of the above match
-        query = query.order('created_at', { ascending: false });
+        processedData.sort((a, b) => parseFloat(b.price) - parseFloat(a.price));
+      } else if (filters?.sortBy === 'rekomendasi') {
+        // Shuffle for rekomendasi
+        for (let i = processedData.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [processedData[i], processedData[j]] = [processedData[j], processedData[i]];
+        }
       }
+      // Default sort is already applied (created_at desc)
 
-      const { data, error } = await query;
-      if (error) throw new Error(error.message);
-
-      // Handle client-side random sort for 'rekomendasi'
-      if (filters?.sortBy === 'rekomendasi') {
-        return shuffleArray(data || []);
-      }
-
-      return data || [];
-    }
+      console.log('Final processed data:', processedData.length, 'products');
+      return processedData;
+    },
+    staleTime: 0, // Don't cache this query
+    gcTime: 0, // Don't cache this query (React Query v5)
   });
 }
 
@@ -133,52 +178,75 @@ export function useInfiniteProducts(filters?: FilterState) {
       console.log('Query result count:', count);
       console.log('Data length:', data?.length);
 
-      // If we have more than 1000 products, we need to fetch all of them
-      // Supabase has a default limit of 1000 rows per query
-      if (count && count > 1000) {
-        console.log('Fetching all products since count > 1000');
-        // Remove any limit by not using range() - this will fetch all products
-        const allQuery = supabase.from('products').select('*');
-        // Apply the same filters
-        if (filters?.search) {
-          const searchTerms = filters.search.toLowerCase().trim().split(/\s+/).filter(term => term.length > 0);
-          if (searchTerms.length > 0) {
-            if (searchTerms.length === 1) {
-              allQuery.ilike('product_name', `%${searchTerms[0]}%`);
-            } else {
-              searchTerms.forEach(term => {
-                allQuery.ilike('product_name', `%${term}%`);
-              });
-            }
-          }
-        }
-        if (filters?.categories && filters.categories.length > 0) {
-          allQuery.in('category', filters.categories);
-        }
-        if (filters?.priceMin !== undefined) {
-          allQuery.gte('price', filters.priceMin);
-        }
-        if (filters?.priceMax !== undefined) {
-          allQuery.lte('price', filters.priceMax);
-        }
-        if (filters?.sortBy === 'popular') {
-          allQuery.order('clicks', { ascending: false });
-        } else if (filters?.sortBy === 'terlaris') {
-          allQuery.order('sales', { ascending: false });
-        } else if (filters?.sortBy === 'harga_termurah') {
-          allQuery.order('price', { ascending: true });
-        } else if (filters?.sortBy === 'harga_tertinggi') {
-          allQuery.order('price', { ascending: false });
-        } else if (filters?.sortBy !== 'rekomendasi') {
-          allQuery.order('created_at', { ascending: false });
-        }
+      // Always try to fetch all products for admin dashboard
+      // Supabase has a default limit of 1000 rows per query, so we need a workaround
+      console.log('Attempting to fetch all products for admin dashboard');
 
-        const { data: allData, error: allError } = await allQuery;
-        if (allError) throw new Error(allError.message);
+      // Use a simpler approach: just fetch everything without any filters first
+      // Then apply client-side filtering if needed
+      const { data: allData, error: allError } = await supabase
+        .from('products')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-        console.log('All products fetched:', allData?.length);
-        return allData || [];
+      if (allError) {
+        console.error('Error fetching all products:', allError);
+        throw new Error(allError.message);
       }
+
+      console.log('All products fetched:', allData?.length);
+
+      // Apply client-side filtering if there are filters
+      let filteredData = allData || [];
+
+      if (filters?.search) {
+        const searchTerms = filters.search.toLowerCase().trim().split(/\s+/).filter(term => term.length > 0);
+        if (searchTerms.length > 0) {
+          filteredData = filteredData.filter(product => {
+            const productName = product.product_name?.toLowerCase() || '';
+            return searchTerms.every(term => productName.includes(term));
+          });
+        }
+      }
+
+      if (filters?.categories && filters.categories.length > 0) {
+        filteredData = filteredData.filter(product =>
+          filters.categories.includes(product.category)
+        );
+      }
+
+      if (filters?.priceMin !== undefined) {
+        filteredData = filteredData.filter(product =>
+          parseFloat(product.price) >= filters.priceMin!
+        );
+      }
+
+      if (filters?.priceMax !== undefined) {
+        filteredData = filteredData.filter(product =>
+          parseFloat(product.price) <= filters.priceMax!
+        );
+      }
+
+      // Apply sorting
+      if (filters?.sortBy === 'popular') {
+        filteredData.sort((a, b) => (b.clicks || 0) - (a.clicks || 0));
+      } else if (filters?.sortBy === 'terlaris') {
+        filteredData.sort((a, b) => (b.sales || 0) - (a.sales || 0));
+      } else if (filters?.sortBy === 'harga_termurah') {
+        filteredData.sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
+      } else if (filters?.sortBy === 'harga_tertinggi') {
+        filteredData.sort((a, b) => parseFloat(b.price) - parseFloat(a.price));
+      } else if (filters?.sortBy === 'rekomendasi') {
+        // Shuffle for rekomendasi
+        for (let i = filteredData.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [filteredData[i], filteredData[j]] = [filteredData[j], filteredData[i]];
+        }
+      }
+      // Default sort is already applied (created_at desc)
+
+      console.log('Filtered data length:', filteredData.length);
+      return filteredData;
 
       // Handle client-side random sort for 'rekomendasi'
       // Note: This will only shuffle the current page, not the whole dataset.

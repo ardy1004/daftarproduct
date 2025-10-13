@@ -69,6 +69,13 @@ export function ProductManagementTab() {
   // Debug logging to check total products
   console.log('Total products in database:', products.length);
   console.log('First 5 products:', products.slice(0, 5).map(p => ({ id: p.id, name: p.product_name, productId: p.product_id })));
+
+  // Check if we have all 1131 products
+  if (products.length > 0 && products.length < 1131) {
+    console.log('WARNING: Only', products.length, 'products loaded, expected 1131. The fix may not be working yet.');
+  } else if (products.length >= 1131) {
+    console.log('SUCCESS: All', products.length, 'products loaded successfully!');
+  }
   const addProduct = useAddProduct();
   const updateProduct = useUpdateProduct();
   const deleteProduct = useDeleteProduct();
