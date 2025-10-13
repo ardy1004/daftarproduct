@@ -21,7 +21,20 @@ export function useProducts(filters?: FilterState) {
 
       // Apply filters
       if (filters?.search) {
-        query = query.ilike('product_name', `%${filters.search}%`);
+        // Split search query into individual terms for better matching
+        const searchTerms = filters.search.toLowerCase().trim().split(/\s+/).filter(term => term.length > 0);
+        if (searchTerms.length > 0) {
+          // Use AND logic: all terms must be present in product_name
+          // For multiple terms, we need to combine them properly
+          if (searchTerms.length === 1) {
+            query = query.ilike('product_name', `%${searchTerms[0]}%`);
+          } else {
+            // For multiple terms, use AND logic by chaining ilike conditions
+            searchTerms.forEach(term => {
+              query = query.ilike('product_name', `%${term}%`);
+            });
+          }
+        }
       }
       if (filters?.categories && filters.categories.length > 0) {
         query = query.in('category', filters.categories);
@@ -70,7 +83,20 @@ export function useInfiniteProducts(filters?: FilterState) {
 
       // Apply filters
       if (filters?.search) {
-        query = query.ilike('product_name', `%${filters.search}%`);
+        // Split search query into individual terms for better matching
+        const searchTerms = filters.search.toLowerCase().trim().split(/\s+/).filter(term => term.length > 0);
+        if (searchTerms.length > 0) {
+          // Use AND logic: all terms must be present in product_name
+          // For multiple terms, we need to combine them properly
+          if (searchTerms.length === 1) {
+            query = query.ilike('product_name', `%${searchTerms[0]}%`);
+          } else {
+            // For multiple terms, use AND logic by chaining ilike conditions
+            searchTerms.forEach(term => {
+              query = query.ilike('product_name', `%${term}%`);
+            });
+          }
+        }
       }
       if (filters?.categories && filters.categories.length > 0) {
         query = query.in('category', filters.categories);

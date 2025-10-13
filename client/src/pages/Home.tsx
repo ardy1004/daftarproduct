@@ -105,9 +105,9 @@ export default function Home() {
                   
                   {allProducts.length > 0 ? (
                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-4" data-testid="grid-all-products">
-                      {allProducts.map((product) => (
+                      {allProducts.map((product, index) => (
                         <ProductCard
-                          key={product.id}
+                          key={`${product.id}-${index}`}
                           product={product}
                           onProductClick={handleProductClick}
                         />

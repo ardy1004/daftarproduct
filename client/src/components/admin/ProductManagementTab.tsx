@@ -59,7 +59,8 @@ export function ProductManagementTab() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
   const [csvExportData, setCsvExportData] = useState<any[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchById, setSearchById] = useState('');
+  const [searchByName, setSearchByName] = useState('');
   const csvLinkRef = useRef<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -69,14 +70,25 @@ export function ProductManagementTab() {
   const deleteProduct = useDeleteProduct();
 
   const filteredProducts = products.filter(product => {
-    if (!searchQuery.trim()) return true;
+    const idQuery = searchById.toLowerCase().trim();
+    const nameQuery = searchByName.toLowerCase().trim();
 
-    const query = searchQuery.toLowerCase().trim();
     const productName = product.product_name?.toLowerCase() || '';
     const productId = product.product_id?.toLowerCase() || '';
 
-    return productName.includes(query) || productId.includes(query);
+    // Split search queries into individual terms for better matching
+    const idTerms = idQuery ? idQuery.split(/\s+/).filter(term => term.length > 0) : [];
+    const nameTerms = nameQuery ? nameQuery.split(/\s+/).filter(term => term.length > 0) : [];
+
+    // Check if product matches ID search terms (all terms must be present)
+    const matchesId = idTerms.length === 0 || idTerms.every(term => productId.includes(term));
+
+    // Check if product matches name search terms (all terms must be present)
+    const matchesName = nameTerms.length === 0 || nameTerms.every(term => productName.includes(term));
+
+    return matchesId && matchesName;
   });
+
 
   const handleAddClick = () => {
     setSelectedProduct(null);
@@ -274,10 +286,20 @@ export function ProductManagementTab() {
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   type="search"
-                  placeholder="Search products..."
-                  className="pl-8 sm:w-[300px]"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search by Product ID..."
+                  className="pl-8 sm:w-[250px]"
+                  value={searchById}
+                  onChange={(e) => setSearchById(e.target.value)}
+                />
+              </div>
+              <div className="relative">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  type="search"
+                  placeholder="Search by Product Name..."
+                  className="pl-8 sm:w-[250px]"
+                  value={searchByName}
+                  onChange={(e) => setSearchByName(e.target.value)}
                 />
               </div>
 
