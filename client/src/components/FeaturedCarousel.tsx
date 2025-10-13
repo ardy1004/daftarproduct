@@ -71,7 +71,7 @@ export function FeaturedCarousel({ onProductClick }: FeaturedCarouselProps) {
       <div className="absolute inset-0">
         {products.map((product, index) => {
           const discount = product.original_price
-            ? calculateDiscount(parseFloat(product.price), parseFloat(product.original_price))
+            ? calculateDiscount(Number(product.price), Number(product.original_price))
             : 0;
           const rating = parseFloat(product.rating?.toString() || '0');
 
@@ -125,28 +125,30 @@ export function FeaturedCarousel({ onProductClick }: FeaturedCarouselProps) {
                     <h2 className="text-3xl md:text-5xl font-bold mb-2 line-clamp-2" title={product.product_name} data-testid={`carousel-product-name-${product.id}`}>
                       {product.product_name}
                     </h2>
-                    <p className="text-lg text-white/80 mb-4" data-testid={`carousel-product-id-${product.id}`}>
+                    <p className="text-lg text-white/80 mb-2 md:mb-4 leading-tight" data-testid={`carousel-product-id-${product.id}`}>
                       {product.product_id}
                     </p>
 
-                    <div className="flex items-center space-x-4 mb-6">
-                      <span className="text-2xl md:text-3xl font-bold text-yellow" data-testid={`carousel-price-${product.id}`}>
-                        {formatPrice(product.price)}
-                      </span>
+                    <div className="flex flex-col items-start mb-4 md:mb-6">
                       {product.original_price && (
-                        <>
-                          <span className="text-lg text-gray-300 line-through" data-testid={`carousel-original-price-${product.id}`}>
-                            {formatPrice(product.original_price)}
-                          </span>
+                        <span className="text-lg text-gray-300 line-through leading-tight" data-testid={`carousel-original-price-${product.id}`}>
+                          {formatPrice(product.original_price)}
+                        </span>
+                      )}
+                      <div className="flex items-center space-x-2">
+                        <span className="text-2xl md:text-3xl font-bold text-yellow leading-tight" data-testid={`carousel-price-${product.id}`}>
+                          {formatPrice(product.price)}
+                        </span>
+                        {product.original_price && (
                           <span className="px-2 py-1 bg-emerald text-emerald-foreground rounded text-sm font-semibold">
                             HEMAT {discount}%
                           </span>
-                        </>
-                      )}
+                        )}
+                      </div>
                     </div>
-                    
+
                     {(rating > 0 || product.sales) && (
-                      <div className="flex items-center space-x-4 mb-8">
+                      <div className="flex items-center space-x-2 md:space-x-4 mb-4 md:mb-8 leading-tight">
                         <div className="flex items-center">
                           {[1, 2, 3, 4, 5].map((star) => (
                             <i
