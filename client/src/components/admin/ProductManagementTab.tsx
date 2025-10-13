@@ -36,15 +36,19 @@ import Papa from 'papaparse';
 import { Input } from '@/components/ui/input';
 
 const productFormSchema = z.object({
+  // Allow empty string, then transform to null for consistency
+  product_id: z.string().optional().transform(val => val === "" ? undefined : val),
   product_name: z.string().min(3),
   category: z.string().min(2),
+  // Coerce to number, allow it to be optional or null
+  original_price: z.coerce.number().min(0).optional(),
   price: z.coerce.number().min(0),
   sales: z.coerce.number().min(0).optional(),
   affiliate_url: z.string().url(),
   image_url: z.string().url(),
   is_featured: z.boolean().default(false),
   featured_order: z.coerce.number().optional(),
-  rating: z.coerce.number().optional(),
+  rating: z.coerce.number().min(0).max(5).optional(),
 });
 
 export function ProductManagementTab() {
@@ -187,17 +191,17 @@ export function ProductManagementTab() {
     const headers = [
       { label: "Product ID", key: "product_id" },
       { label: "Product Name", key: "product_name" },
+      { label: "Category", key: "category" },
+      { label: "Original Price", key: "original_price" },
       { label: "Price", key: "price" },
       { label: "Sales", key: "sales" },
-      { label: "Category", key: "category" },
-      { label: "Subcategory", key: "subcategory" },
       { label: "Affiliate URL", key: "affiliate_url" },
       { label: "Image URL", key: "image_url" },
       { label: "Is Featured", key: "is_featured" },
       { label: "Featured Order", key: "featured_order" },
       { label: "Rating", key: "rating" },
     ];
-    setCsvExportData(products.map(p => ({...p})));
+    setCsvExportData(products); // products is already an array of objects
     setTimeout(() => {
       csvLinkRef.current.link.click();
     }, 100);
@@ -215,22 +219,36 @@ export function ProductManagementTab() {
       header: true,
       skipEmptyLines: true,
       complete: (results) => {
-        
         const parsedData = results.data as any[];
-        // TODO: Add validation here
-        const importPromises = parsedData.map(item => {
-          const productData = {
-            ...item,
-            product_id: item.product_id || null
-          };
-          return addProduct.mutateAsync(productData);
+        let successfulImports = 0;
+        let failedImports = 0;
+
+        const importPromises = parsedData.map((item, index) => {
+          // Use schema to validate and parse each row
+          const validationResult = productFormSchema.safeParse(item);
+
+          if (validationResult.success) {
+            successfulImports++;
+            return addProduct.mutateAsync(validationResult.data);
+          } else {
+            failedImports++;
+            // Log detailed error for the user
+            const errorMessages = validationResult.error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
+            toast({
+              variant: "destructive",
+              title: `Validation Error on Row ${index + 2}`,
+              description: `Skipping row. Details: ${errorMessages}`,
+            });
+            return Promise.resolve(); // Resolve to not break Promise.all
+          }
         });
+
         Promise.all(importPromises)
           .then(() => {
-            toast({ title: "Success", description: `${parsedData.length} products imported successfully.` });
+            toast({ title: "Import Complete", description: `${successfulImports} products imported successfully. ${failedImports} rows failed.` });
           })
           .catch((error) => {
-            toast({ variant: "destructive", title: "Error", description: `Import failed: ${error.message}` });
+            toast({ variant: "destructive", title: "Import Error", description: `An unexpected error occurred during import: ${error.message}` });
           });
       },
       error: (error) => {

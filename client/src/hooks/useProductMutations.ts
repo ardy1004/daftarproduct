@@ -7,6 +7,7 @@ export const productFormSchema = z.object({
   product_id: z.string().optional(),
   product_name: z.string().min(3),
   category: z.string().min(2),
+  original_price: z.coerce.number().min(0).optional(),
   price: z.coerce.number().min(0),
   sales: z.coerce.number().min(0).optional(),
   affiliate_url: z.string().url(),
@@ -24,6 +25,7 @@ export function useAddProduct() {
         product_id: newProduct.product_id,
         product_name: newProduct.product_name,
         category: newProduct.category,
+        original_price: newProduct.original_price,
         price: newProduct.price,
         sales: newProduct.sales,
         affiliate_url: newProduct.affiliate_url,
@@ -50,8 +52,10 @@ export function useUpdateProduct() {
       const { data, error } = await supabase
         .from('products')
         .update({
+          product_id: updateData.product_id,
           product_name: updateData.product_name,
           category: updateData.category,
+          original_price: updateData.original_price,
           price: updateData.price,
           sales: updateData.sales,
           affiliate_url: updateData.affiliate_url,

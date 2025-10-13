@@ -2,8 +2,8 @@ export interface Product {
   id: string;
   product_id: string | null;
   product_name: string;
-  price: string;
-  original_price?: string | null;
+  price: string | number;
+  original_price?: string | number | null;
   sales: number | null;
   category: string;
   subcategory: string | null;

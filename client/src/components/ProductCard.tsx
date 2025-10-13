@@ -68,6 +68,24 @@ export function ProductCard({ product, onProductClick }: ProductCardProps) {
           )}
         </div>
 
+        {/* Discount percentage overlay - bottom left corner */}
+        {(() => {
+          const currentPrice = typeof product.price === 'string' ? parseFloat(product.price) : product.price;
+          const originalPrice = product.original_price ? (typeof product.original_price === 'string' ? parseFloat(product.original_price) : product.original_price) : null;
+
+          if (originalPrice && originalPrice > currentPrice) {
+            const discountPercent = Math.round(((originalPrice - currentPrice) / originalPrice) * 100);
+            return (
+              <div className="absolute bottom-2 left-2">
+                <span className="bg-red-500 text-white px-2 py-1 rounded-md text-sm font-bold shadow-lg">
+                  -{discountPercent}%
+                </span>
+              </div>
+            );
+          }
+          return null;
+        })()}
+
         <div className="absolute top-2 right-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -152,13 +170,43 @@ export function ProductCard({ product, onProductClick }: ProductCardProps) {
         <div className="flex-grow"></div>
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mt-2">
           <div>
-            <p className="text-lg font-bold text-emerald">
-              {new Intl.NumberFormat('id-ID', {
-                style: 'currency',
-                currency: 'IDR',
-                minimumFractionDigits: 0,
-              }).format(parseFloat(product.price))}
-            </p>
+            {(() => {
+              const currentPrice = typeof product.price === 'string' ? parseFloat(product.price) : product.price;
+              const originalPrice = product.original_price ? (typeof product.original_price === 'string' ? parseFloat(product.original_price) : product.original_price) : null;
+
+              if (originalPrice && originalPrice > currentPrice) {
+                const discountPercent = Math.round(((originalPrice - currentPrice) / originalPrice) * 100);
+                return (
+                  <div className="flex flex-col">
+                    <p className="text-sm text-muted-foreground line-through">
+                      {new Intl.NumberFormat('id-ID', {
+                        style: 'currency',
+                        currency: 'IDR',
+                        minimumFractionDigits: 0,
+                      }).format(originalPrice)}
+                    </p>
+                    <p className="text-lg font-bold text-emerald">
+                      {new Intl.NumberFormat('id-ID', {
+                        style: 'currency',
+                        currency: 'IDR',
+                        minimumFractionDigits: 0,
+                      }).format(currentPrice)}
+                    </p>
+                    {/* Discount percentage removed from here - now shown as overlay on image */}
+                  </div>
+                );
+              } else {
+                return (
+                  <p className="text-lg font-bold text-emerald">
+                    {new Intl.NumberFormat('id-ID', {
+                      style: 'currency',
+                      currency: 'IDR',
+                      minimumFractionDigits: 0,
+                    }).format(currentPrice)}
+                  </p>
+                );
+              }
+            })()}
           </div>
           {product.sales && (
             <span className="text-xs text-muted-foreground mt-1 sm:mt-0">{product.sales} terjual</span>
