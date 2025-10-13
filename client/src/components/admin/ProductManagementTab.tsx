@@ -68,10 +68,15 @@ export function ProductManagementTab() {
   const updateProduct = useUpdateProduct();
   const deleteProduct = useDeleteProduct();
 
-  const filteredProducts = products.filter(product =>
-    product.product_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (product.product_id && product.product_id.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+  const filteredProducts = products.filter(product => {
+    if (!searchQuery.trim()) return true;
+
+    const query = searchQuery.toLowerCase().trim();
+    const productName = product.product_name?.toLowerCase() || '';
+    const productId = product.product_id?.toLowerCase() || '';
+
+    return productName.includes(query) || productId.includes(query);
+  });
 
   const handleAddClick = () => {
     setSelectedProduct(null);
