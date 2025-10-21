@@ -128,13 +128,20 @@ export function useInfiniteProducts(filters?: FilterState) {
 
       // For infinite scroll, we still use pagination but with larger batches
       // to ensure all products can be loaded eventually
-      const BATCH_SIZE = 100; // Smaller batches for infinite scroll
+      const BATCH_SIZE = 20; // Smaller batches for infinite scroll
       const from = pageParam * BATCH_SIZE;
       const to = from + BATCH_SIZE - 1;
 
       let query = supabase.from('products').select('*');
 
       // Apply filters
+      if (filters?.category) {
+        query = query.eq('category', filters.category);
+      }
+      if (filters?.subcategory) {
+        query = query.eq('subcategory', filters.subcategory);
+      }
+      
       if (filters?.search) {
         const searchTerms = filters.search.toLowerCase().trim().split(/\s+/).filter(term => term.length > 0);
         if (searchTerms.length > 0) {
@@ -192,11 +199,13 @@ export function useInfiniteProducts(filters?: FilterState) {
     initialPageParam: 0,
     getNextPageParam: (lastPage, allPages) => {
       // If the last page had fewer products than we requested, we've reached the end
-      if (lastPage.length < 100) {
+      if (lastPage.length < 20) {
         return undefined;
       }
       return allPages.length;
     },
+    staleTime: 0, // Don't cache this query
+    gcTime: 0, // Don't cache this query (React Query v5)
   });
 }
 
@@ -211,7 +220,9 @@ export function useFeaturedProducts() {
         .order('featured_order', { ascending: true });
       if (error) throw new Error(error.message);
       return data || [];
-    }
+    },
+    staleTime: 0, // Don't cache this query
+    gcTime: 0, // Don't cache this query (React Query v5)
   });
 }
 
@@ -226,7 +237,9 @@ export function useLatestProducts(limit: number = 4) {
         .limit(limit);
       if (error) throw new Error(error.message);
       return data || [];
-    }
+    },
+    staleTime: 0, // Don't cache this query
+    gcTime: 0, // Don't cache this query (React Query v5)
   });
 }
 
@@ -236,11 +249,23 @@ export function useCategories() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('products')
-        .select('category')
-        .distinct('category');
+        .select('category, subcategory');
       if (error) throw new Error(error.message);
-      return data?.map(item => item.category) || [];
-    }
+
+      const categoriesSet = new Set<string>();
+      const subcategoriesSet = new Set<string>();
+
+      (data || []).forEach(item => {
+        if (item.category) categoriesSet.add(item.category);
+        if (item.subcategory) subcategoriesSet.add(item.subcategory);
+      });
+
+      const uniqueCategories = Array.from(categoriesSet);
+      const uniqueSubcategories = Array.from(subcategoriesSet);
+      
+      return { categories: uniqueCategories, subcategories: uniqueSubcategories };
+    },
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
   });
 }
 
@@ -255,7 +280,9 @@ export function useNonFeaturedProducts() {
         .order('created_at', { ascending: false });
       if (error) throw new Error(error.message);
       return data || [];
-    }
+    },
+    staleTime: 0, // Don't cache this query
+    gcTime: 0, // Don't cache this query (React Query v5)
   });
 }
 

@@ -40,6 +40,7 @@ const productFormSchema = z.object({
   product_id: z.string().optional().transform(val => val === "" ? undefined : val),
   product_name: z.string().min(3),
   category: z.string().min(2),
+  subcategory: z.string().optional().transform(val => val === "" ? null : val),
   // Coerce to number, allow it to be optional or null
   original_price: z.coerce.number().min(0).optional(),
   price: z.coerce.number().min(0),
@@ -49,6 +50,7 @@ const productFormSchema = z.object({
   is_featured: z.boolean().default(false),
   featured_order: z.coerce.number().optional(),
   rating: z.coerce.number().min(0).max(5).optional(),
+  stock_available: z.boolean().default(true),
 });
 
 export function ProductManagementTab() {
@@ -185,6 +187,7 @@ export function ProductManagementTab() {
         onSuccess: () => {
           toast({ title: "Success", description: "Product updated successfully." });
           setIsFormOpen(false);
+          setSelectedProduct(null); // Clear selected product after successful update
         },
         onError: (error) => {
           toast({ variant: "destructive", title: "Error", description: error.message });
@@ -201,7 +204,7 @@ export function ProductManagementTab() {
         },
       });
     }
-  }; 
+  };
   
   const handleGenerateRating = (product: Product) => {
     const possibleRatings = [4, 4.5, 5];

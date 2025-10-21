@@ -45,6 +45,12 @@ export function ProductCard({ product, onProductClick }: ProductCardProps) {
   return (
     <div className="bg-card rounded-xl border border-border overflow-hidden shadow-sm hover:shadow-lg transition-shadow duration-300 group flex flex-col product-card">
       <div className="relative overflow-hidden">
+        {/* Overlay "HABIS" jika produk tidak tersedia */}
+        {(product.stock_available === false || product.stock_available === null) && (
+          <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-10">
+            <span className="text-white text-2xl font-bold uppercase tracking-wider">HABIS</span>
+          </div>
+        )}
         <img
           src={product.image_url || 'https://via.placeholder.com/300'}
           alt={product.product_name}
@@ -218,6 +224,7 @@ export function ProductCard({ product, onProductClick }: ProductCardProps) {
         <Button
           onClick={handleProductRedirect}
           className="w-full bg-gradient-to-r from-emerald to-violet text-white font-semibold shadow-md hover:shadow-lg hover:brightness-110 active:shadow-inner transition-all duration-200 transform group-hover:scale-105"
+          disabled={product.stock_available === false || product.stock_available === null}
         >
           Lihat Produk
         </Button>

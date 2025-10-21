@@ -15,6 +15,7 @@ export const productFormSchema = z.object({
   is_featured: z.boolean().default(false),
   featured_order: z.coerce.number().optional(),
   rating: z.coerce.number().optional(),
+  stock_available: z.boolean().default(true),
 });
 
 export function useAddProduct() {
@@ -33,6 +34,7 @@ export function useAddProduct() {
         is_featured: newProduct.is_featured,
         featured_order: newProduct.featured_order,
         rating: newProduct.rating,
+        stock_available: newProduct.stock_available,
       }]).select();
 
       if (error) throw new Error(error.message);
@@ -63,6 +65,7 @@ export function useUpdateProduct() {
           is_featured: updateData.is_featured,
           featured_order: updateData.featured_order,
           rating: updateData.rating,
+          stock_available: updateData.stock_available,
         })
         .eq('id', id)
         .select();

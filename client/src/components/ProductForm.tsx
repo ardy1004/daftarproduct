@@ -6,6 +6,7 @@ import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import {
   Form,
@@ -23,6 +24,7 @@ const formSchema = z.object({
   product_id: z.string().optional(),
   product_name: z.string().min(3, "Product name must be at least 3 characters"),
   category: z.string().min(2, "Category is required"),
+  subcategory: z.string().optional(),
   original_price: z.coerce.number().min(0, "Original price must be a positive number").optional(),
   price: z.coerce.number().min(0, "Price must be a positive number"),
   sales: z.coerce.number().min(0, "Sales must be a positive number").optional(),
@@ -31,6 +33,7 @@ const formSchema = z.object({
   is_featured: z.boolean().optional().default(false),
   featured_order: z.coerce.number().optional(),
   rating: z.coerce.number().optional(),
+  stock_available: z.boolean().default(true),
 });
 
 interface ProductFormProps {
@@ -46,13 +49,15 @@ export function ProductForm({ product, onSubmit, isSubmitting }: ProductFormProp
       product_id: product?.product_id || "",
       product_name: product?.product_name || "",
       category: product?.category || "",
-      original_price: product?.original_price ? (typeof product.original_price === 'string' ? parseFloat(product.original_price) : product.original_price) : undefined,
+      subcategory: product?.subcategory || "",
+      original_price: product?.original_price != null ? (typeof product.original_price === 'string' ? parseFloat(product.original_price) : product.original_price) : undefined,
       price: product?.price ? (typeof product.price === 'string' ? parseFloat(product.price) : product.price) : 0,
       sales: product?.sales || 0,
       affiliate_url: product?.affiliate_url || "",
       image_url: product?.image_url || "",
       is_featured: product?.is_featured || false,
       featured_order: product?.featured_order || 0,
+      stock_available: product?.stock_available ?? true,
     },
   });
 
@@ -85,7 +90,7 @@ export function ProductForm({ product, onSubmit, isSubmitting }: ProductFormProp
             </FormItem>
           )}
         />
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-3 gap-4">
           <FormField
             control={form.control}
             name="category"
@@ -94,6 +99,19 @@ export function ProductForm({ product, onSubmit, isSubmitting }: ProductFormProp
                 <FormLabel>Category</FormLabel>
                 <FormControl>
                   <Input placeholder="e.g. Electronics" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="subcategory"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Subcategory</FormLabel>
+                <FormControl>
+                  <Input placeholder="e.g. Laptops" {...field} value={field.value ?? ''} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -181,6 +199,23 @@ export function ProductForm({ product, onSubmit, isSubmitting }: ProductFormProp
                   Display this product in the featured carousel on the homepage.
                 </FormDescription>
               </div>
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="stock_available"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+              <div className="space-y-0.5">
+                <FormLabel className="text-base">Ketersediaan Stok</FormLabel>
+                <FormDescription>
+                  Atur apakah produk ini tersedia atau habis.
+                </FormDescription>
+              </div>
+              <FormControl>
+                <Switch checked={field.value} onCheckedChange={field.onChange} />
+              </FormControl>
             </FormItem>
           )}
         />

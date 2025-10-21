@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from '@/components/ThemeProvider';
 import { TrackingScripts } from '@/components/TrackingScripts';
 import PrivateRoute from '@/components/PrivateRoute';
+import { CategoryProvider } from '@/context/CategoryContext';
 
 // Import Pages
 import Home from '@/pages/Home';
@@ -25,32 +26,36 @@ function App() {
     <HelmetProvider>
       <QueryClientProvider client={queryClient}>
         <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
-          <TrackingScripts />
-          <Routes>
-              {/* Public Routes */}
-              <Route path="/" element={<Home />} />
-              <Route path="/admin/login" element={<AdminLogin />} />
+          <CategoryProvider>
+            <TrackingScripts />
+            <Routes>
+                {/* Public Routes */}
+                <Route path="/:category" element={<Home />} />
+                <Route path="/:category/:subcategory" element={<Home />} />
+                <Route path="/" element={<Home />} />
+                <Route path="/admin/login" element={<AdminLogin />} />
 
-              {/* Legal Pages */}
-              <Route path="/faq" element={<FaqPage />} />
-              <Route path="/how-to-shop" element={<HowToShopPage />} />
-              <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
-              <Route path="/terms-and-conditions" element={<TermsAndConditionsPage />} />
+                {/* Legal Pages */}
+                <Route path="/faq" element={<FaqPage />} />
+                <Route path="/how-to-shop" element={<HowToShopPage />} />
+                <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+                <Route path="/terms-and-conditions" element={<TermsAndConditionsPage />} />
 
-              {/* Private Admin Routes */}
-              <Route 
-                path="/admin/dashboard" 
-                element={
-                  <PrivateRoute>
-                    <AdminDashboard />
-                  </PrivateRoute>
-                } 
-              />
+                {/* Private Admin Routes */}
+                <Route 
+                  path="/admin/dashboard" 
+                  element={
+                    <PrivateRoute>
+                      <AdminDashboard />
+                    </PrivateRoute>
+                  }
+                />
 
-              {/* Not Found Route */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          <Toaster />
+                {/* Not Found Route */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            <Toaster />
+          </CategoryProvider>
         </ThemeProvider>
       </QueryClientProvider>
     </HelmetProvider>

@@ -13,6 +13,7 @@ export interface Product {
   is_featured: boolean | null;
   featured_order: number | null;
   created_at: string | null;
+  stock_available: boolean | null;
 }
 
 export interface ProductAnalytics {
@@ -36,6 +37,8 @@ export interface FilterState {
   priceMin: number;
   priceMax: number;
   sortBy: string;
+  category?: string;
+  subcategory?: string;
 }
 
 export interface Categories {

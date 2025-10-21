@@ -1,11 +1,13 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useParams } from "react-router-dom";
 import { Search, Loader2 } from 'lucide-react';
 import { Header } from '@/components/Header';
 import { FeaturedCarousel } from '@/components/FeaturedCarousel';
 import { ProductCard } from '@/components/ProductCard';
 import { FilterSidebar } from '@/components/FilterSidebar';
 import { Button } from '@/components/ui/button';
+import { slugify } from '@/lib/utils';
+import { useCategoryContext } from "@/context/CategoryContext";
 import { useInfiniteProducts, useTrackProductClick } from "@/hooks/useProductQueries";
 import type { FilterState, Product } from '@/types';
 
@@ -18,6 +20,24 @@ export default function Home() {
     sortBy: 'popular'
   });
   const [showFilters, setShowFilters] = useState(false);
+  const { category: categorySlug, subcategory: subcategorySlug } = useParams<{ category: string; subcategory?: string }>();
+  const { categoryData, isLoading: isCategoryLoading, categorySlugMap, subcategorySlugMap } = useCategoryContext();
+
+  useEffect(() => {
+    // Find the original names from the slug maps
+    const categoryName = categorySlug ? categorySlugMap.get(categorySlug) : undefined;
+    const subcategoryName = subcategorySlug ? subcategorySlugMap.get(subcategorySlug) : undefined;
+
+    // Update filters based on the resolved original names
+    setFilters(prevFilters => ({
+      ...prevFilters,
+      category: categoryName,
+      subcategory: subcategoryName,
+      // Reset sidebar category selection when a URL-based filter is active
+      categories: (categoryName || subcategoryName) ? [] : prevFilters.categories,
+    }));
+    
+  }, [categorySlug, subcategorySlug, categorySlugMap, subcategorySlugMap]);
 
   // Use the centralized data hooks
   const { 
@@ -25,7 +45,7 @@ export default function Home() {
     fetchNextPage, 
     hasNextPage, 
     isFetchingNextPage, 
-    isLoading 
+    isLoading: isProductsLoading 
   } = useInfiniteProducts(filters);
   const trackProductClick = useTrackProductClick();
 
@@ -95,7 +115,7 @@ export default function Home() {
             {/* Products Grid */}
             <div className="lg:col-span-3">
               {/* Loading state for initial fetch */}
-              {isLoading && (
+              {isProductsLoading && (
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8" data-testid="loading-products">
                   {[...Array(6)].map((_, i) => (
                     <div key={i} className="bg-card rounded-xl border border-border p-4 loading-pulse">
@@ -109,7 +129,7 @@ export default function Home() {
               )}
               
               {/* Products results */}
-              {!isLoading && (
+              {!isProductsLoading && (
                 <div>
                   <div className="flex items-center justify-between mb-6">
                     <span className="text-muted-foreground" data-testid="text-products-count">
@@ -205,12 +225,21 @@ export default function Home() {
             
             <div>
               <h4 className="font-semibold mb-4">Kategori</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><a href="#" className="hover:text-emerald transition-colors">Electronics</a></li>
-                <li><a href="#" className="hover:text-emerald transition-colors">Fashion</a></li>
-                <li><a href="#" className="hover:text-emerald transition-colors">Home & Living</a></li>
-                <li><a href="#" className="hover:text-emerald transition-colors">Sports</a></li>
-              </ul>
+              {isCategoryLoading ? (
+                <ul className="space-y-2 text-sm text-muted-foreground">
+                  {[...Array(4)].map((_, i) => <li key={i}><div className="h-4 bg-muted rounded w-2/3"></div></li>)}
+                </ul>
+              ) : (
+                <ul className="space-y-2 text-sm text-muted-foreground">
+                  {categoryData.categories.slice(0, 5).map(category => (
+                    <li key={category}>
+                      <Link to={`/${slugify(category)}`} className="hover:text-emerald transition-colors">
+                        {category}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
             
             <div>

@@ -17,6 +17,7 @@ export const products = pgTable("products", {
   rating: numeric("rating").default("0"),
   isFeatured: boolean("is_featured").default(false),
   featuredOrder: integer("featured_order"),
+  stockAvailable: boolean("stock_available").default(true),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
 });
 
