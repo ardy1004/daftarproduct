@@ -152,7 +152,7 @@ export function ProductCard({ product, onProductClick }: ProductCardProps) {
       </div>
 
       <div className="p-4 flex flex-col flex-grow">
-        <h3 className="font-semibold text-base leading-snug truncate mb-2" title={product.product_name}>
+        <h3 className="font-semibold text-base leading-snug line-clamp-2 mb-2 h-11" title={product.product_name}>
           {product.product_name}
         </h3>
         <p className="text-xs text-muted-foreground mb-2" data-testid={`product-id-${product.id}`}>
