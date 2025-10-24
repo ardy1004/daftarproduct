@@ -33,7 +33,6 @@ export interface Settings {
 
 export interface FilterState {
   search: string;
-  categories: string[];
   priceMin: number;
   priceMax: number;
   sortBy: string;
@@ -41,7 +40,5 @@ export interface FilterState {
   subcategory?: string;
 }
 
-export interface Categories {
-  categories: string[];
-  subcategories: string[];
-}
+export type CategoryHierarchy = Map<string, Set<string>>;
+

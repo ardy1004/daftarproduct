@@ -1,29 +1,39 @@
+
 import { useState, useEffect } from 'react';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import { Tag, Folder, RotateCcw, SlidersHorizontal } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
-import { useCategories } from '@/hooks/useProductQueries';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import { useCategoryContext } from '@/context/CategoryContext';
 import { useSettings } from '@/hooks/useSettings';
-import { formatPrice } from '@/lib/utils';
+import { formatPrice, slugify } from '@/lib/utils';
 import type { FilterState } from '@/types';
 
 interface FilterSidebarProps {
   filters: FilterState;
-  onFiltersChange: (filters: FilterState) => void;
+  onFiltersChange: (filters: Omit<FilterState, 'categories'>) => void;
   showFilters: boolean;
   onToggleFilters: () => void;
 }
 
 export function FilterSidebar({ filters, onFiltersChange, showFilters, onToggleFilters }: FilterSidebarProps) {
-  const { data: categoriesData } = useCategories();
+  const { hierarchy, isLoading: isHierarchyLoading, categorySlugMap } = useCategoryContext();
   const { data: settings, isLoading: isLoadingSettings } = useSettings();
+  const { category: categorySlug, subcategory: subcategorySlug } = useParams<{ category: string; subcategory?: string }>();
+  const navigate = useNavigate();
+
   const [localPriceMin, setLocalPriceMin] = useState(filters.priceMin);
   const [localPriceMax, setLocalPriceMax] = useState(filters.priceMax);
 
-  // Debounced price update
+  useEffect(() => {
+    setLocalPriceMin(filters.priceMin);
+    setLocalPriceMax(filters.priceMax);
+  }, [filters.priceMin, filters.priceMax]);
+
   useEffect(() => {
     const timeout = setTimeout(() => {
       if (localPriceMin !== filters.priceMin || localPriceMax !== filters.priceMax) {
@@ -33,33 +43,24 @@ export function FilterSidebar({ filters, onFiltersChange, showFilters, onToggleF
           priceMax: localPriceMax
         });
       }
-    }, 300);
+    }, 500);
 
     return () => clearTimeout(timeout);
-  }, [localPriceMin, localPriceMax]);
-
-  const handleCategoryToggle = (category: string) => {
-    const newCategories = filters.categories.includes(category)
-      ? filters.categories.filter(c => c !== category)
-      : [...filters.categories, category];
-    
-    onFiltersChange({
-      ...filters,
-      categories: newCategories
-    });
-  };
+  }, [localPriceMin, localPriceMax, filters, onFiltersChange]);
 
   const resetFilters = () => {
     const resetState = {
       search: '',
-      categories: [],
       priceMin: 0,
       priceMax: 20000000,
-      sortBy: 'popular'
+      sortBy: 'popular',
+      category: undefined,
+      subcategory: undefined,
     };
     setLocalPriceMin(0);
     setLocalPriceMax(20000000);
     onFiltersChange(resetState);
+    navigate('/');
   };
 
   const handlePriceSliderChange = (values: number[]) => {
@@ -75,40 +76,74 @@ export function FilterSidebar({ filters, onFiltersChange, showFilters, onToggleF
   };
 
   const renderCategoryFilter = () => {
-    if (isLoadingSettings) {
-      return <p>Loading filter settings...</p>;
+    if (isLoadingSettings || isHierarchyLoading) {
+      return <p>Loading categories...</p>;
     }
 
     if (!settings?.show_category_filter) {
       return null;
     }
 
+    const activeCategoryName = categorySlug ? categorySlugMap.get(categorySlug) : undefined;
+
+    const handleCategoryClick = (categoryName: string) => {
+      if (categoryName === activeCategoryName) {
+        navigate('/'); // Toggle off if clicking the active category
+      } else {
+        navigate(`/${slugify(categoryName)}`);
+      }
+    };
+
     return (
-      categoriesData?.categories?.length > 0 && (
-        <div className="mb-8">
-          <h4 className="font-semibold mb-4 flex items-center">
-            <Folder className="h-4 w-4 text-emerald mr-2" />
-            Kategori
-          </h4>
-          <div className="space-y-3">
-            {categoriesData.categories.map((category) => (
-              <div key={category} className="flex items-center space-x-3">
-                <Checkbox
-                  id={`category-${category}`}
-                  checked={filters.categories.includes(category)}
-                  onCheckedChange={() => handleCategoryToggle(category)}
-                />
-                <label 
-                  htmlFor={`category-${category}`}
-                  className="text-sm cursor-pointer hover:text-emerald transition-colors"
-                >
-                  {category}
-                </label>
+      <div className="mb-8">
+        <h4 className="font-semibold mb-4 flex items-center">
+          <Folder className="h-4 w-4 text-emerald mr-2" />
+          Kategori
+        </h4>
+        <div className="space-y-3">
+          {Array.from(hierarchy.keys()).sort().map(categoryName => {
+            const subcategories = Array.from(hierarchy.get(categoryName) || []).sort();
+            const currentCategorySlug = slugify(categoryName);
+            const isCategoryOpen = activeCategoryName === categoryName;
+
+            return (
+              <div key={categoryName}>
+                <div className="flex items-center space-x-3">
+                  <Checkbox 
+                    id={categoryName} 
+                    checked={isCategoryOpen}
+                    onCheckedChange={() => handleCategoryClick(categoryName)}
+                    className="rounded-full data-[state=checked]:bg-emerald data-[state=checked]:text-white"
+                  />
+                  <Label 
+                    htmlFor={categoryName} 
+                    className="cursor-pointer hover:text-emerald transition-colors w-full"
+                  >
+                    {categoryName}
+                  </Label>
+                </div>
+                {isCategoryOpen && subcategories.length > 0 && (
+                  <ul className="space-y-2 pl-8 pt-2">
+                    {subcategories.map(subcategoryName => {
+                      const currentSubcategorySlug = slugify(subcategoryName);
+                      const isSubcategoryActive = subcategorySlug === currentSubcategorySlug;
+                      return (
+                        <li key={subcategoryName}>
+                          <Link 
+                            to={`/${currentCategorySlug}/${currentSubcategorySlug}`} 
+                            className={`text-sm hover:text-emerald transition-colors ${isSubcategoryActive ? 'text-emerald font-bold' : 'text-muted-foreground'}`}>
+                            {subcategoryName}
+                          </Link>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
               </div>
-            ))}
-          </div>
+            );
+          })}
         </div>
-      )
+      </div>
     );
   };
 

@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
-import type { Product, FilterState, Categories } from '@/types';
+import type { Product, FilterState, CategoryHierarchy } from '@/types';
 import { supabase } from '@/lib/supabaseClient';
 
 // Fisher-Yates shuffle algorithm for random sorting
@@ -244,26 +244,28 @@ export function useLatestProducts(limit: number = 4) {
 }
 
 export function useCategories() {
-  return useQuery<Categories>({
-    queryKey: ['categories'],
+  return useQuery<CategoryHierarchy>({
+    queryKey: ['categoryHierarchy'], // Changed queryKey for clarity
     queryFn: async () => {
       const { data, error } = await supabase
         .from('products')
         .select('category, subcategory');
       if (error) throw new Error(error.message);
 
-      const categoriesSet = new Set<string>();
-      const subcategoriesSet = new Set<string>();
+      const hierarchy = new Map<string, Set<string>>();
 
       (data || []).forEach(item => {
-        if (item.category) categoriesSet.add(item.category);
-        if (item.subcategory) subcategoriesSet.add(item.subcategory);
+        if (item.category) {
+          if (!hierarchy.has(item.category)) {
+            hierarchy.set(item.category, new Set<string>());
+          }
+          if (item.subcategory) {
+            hierarchy.get(item.category)!.add(item.subcategory);
+          }
+        }
       });
 
-      const uniqueCategories = Array.from(categoriesSet);
-      const uniqueSubcategories = Array.from(subcategoriesSet);
-      
-      return { categories: uniqueCategories, subcategories: uniqueSubcategories };
+      return hierarchy;
     },
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
   });

@@ -1,15 +1,10 @@
-
 import { createContext, useContext, useMemo } from 'react';
 import { useCategories } from '@/hooks/useProductQueries';
 import { slugify } from '@/lib/utils';
-
-interface CategoryData {
-  categories: string[];
-  subcategories: string[];
-}
+import type { CategoryHierarchy } from '@/types';
 
 interface CategoryContextType {
-  categoryData: CategoryData;
+  hierarchy: CategoryHierarchy;
   categorySlugMap: Map<string, string>;
   subcategorySlugMap: Map<string, string>;
   isLoading: boolean;
@@ -18,33 +13,30 @@ interface CategoryContextType {
 const CategoryContext = createContext<CategoryContextType | undefined>(undefined);
 
 export function CategoryProvider({ children }: { children: React.ReactNode }) {
-  const { data, isLoading } = useCategories();
-
-  const categoryData = useMemo(() => {
-    return {
-      categories: data?.categories || [],
-      subcategories: data?.subcategories || [],
-    };
-  }, [data]);
+  const { data: hierarchy, isLoading } = useCategories();
 
   const categorySlugMap = useMemo(() => {
     const map = new Map<string, string>();
-    categoryData.categories.forEach(name => {
-      map.set(slugify(name), name);
-    });
+    if (!hierarchy) return map;
+    for (const categoryName of hierarchy.keys()) {
+      map.set(slugify(categoryName), categoryName);
+    }
     return map;
-  }, [categoryData.categories]);
+  }, [hierarchy]);
 
   const subcategorySlugMap = useMemo(() => {
     const map = new Map<string, string>();
-    categoryData.subcategories.forEach(name => {
-      map.set(slugify(name), name);
-    });
+    if (!hierarchy) return map;
+    for (const subcategories of hierarchy.values()) {
+      for (const subcategoryName of subcategories) {
+        map.set(slugify(subcategoryName), subcategoryName);
+      }
+    }
     return map;
-  }, [categoryData.subcategories]);
+  }, [hierarchy]);
 
   const value = {
-    categoryData,
+    hierarchy: hierarchy || new Map(),
     categorySlugMap,
     subcategorySlugMap,
     isLoading,

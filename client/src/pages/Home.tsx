@@ -9,37 +9,31 @@ import { Button } from '@/components/ui/button';
 import { slugify } from '@/lib/utils';
 import { useCategoryContext } from "@/context/CategoryContext";
 import { useInfiniteProducts, useTrackProductClick } from "@/hooks/useProductQueries";
-import type { FilterState, Product } from '@/types';
+import type { FilterState } from '@/types';
 
 export default function Home() {
   const [filters, setFilters] = useState<FilterState>({
     search: '',
-    categories: [],
     priceMin: 0,
     priceMax: 20000000,
     sortBy: 'popular'
   });
   const [showFilters, setShowFilters] = useState(false);
   const { category: categorySlug, subcategory: subcategorySlug } = useParams<{ category: string; subcategory?: string }>();
-  const { categoryData, isLoading: isCategoryLoading, categorySlugMap, subcategorySlugMap } = useCategoryContext();
+  const { hierarchy, isLoading: isCategoryLoading, categorySlugMap, subcategorySlugMap } = useCategoryContext();
 
   useEffect(() => {
-    // Find the original names from the slug maps
     const categoryName = categorySlug ? categorySlugMap.get(categorySlug) : undefined;
     const subcategoryName = subcategorySlug ? subcategorySlugMap.get(subcategorySlug) : undefined;
 
-    // Update filters based on the resolved original names
     setFilters(prevFilters => ({
       ...prevFilters,
       category: categoryName,
       subcategory: subcategoryName,
-      // Reset sidebar category selection when a URL-based filter is active
-      categories: (categoryName || subcategoryName) ? [] : prevFilters.categories,
     }));
     
   }, [categorySlug, subcategorySlug, categorySlugMap, subcategorySlugMap]);
 
-  // Use the centralized data hooks
   const { 
     data, 
     fetchNextPage, 
@@ -50,20 +44,6 @@ export default function Home() {
   const trackProductClick = useTrackProductClick();
 
   const allProducts = data?.pages.flatMap(page => page) ?? [];
-
-  // Debug logging to check if specific product exists
-  const specificProduct = allProducts.find(p => p.product_id === 'ACX.G-018');
-  console.log('Product ACX.G-018 found in frontend:', specificProduct);
-  console.log('Total products in frontend:', allProducts.length);
-  console.log('First 5 products in frontend:', allProducts.slice(0, 5).map(p => ({ id: p.product_id, name: p.product_name })));
-
-  // Check if product is visible in current display
-  const isProductVisible = allProducts.some(p => p.product_id === 'ACX.G-018');
-  if (isProductVisible) {
-    console.log('✅ Product ACX.G-018 is visible in frontend!');
-  } else {
-    console.log('❌ Product ACX.G-018 is NOT visible in frontend yet. Try scrolling to load more products.');
-  }
 
   const handleFiltersChange = (newFilters: FilterState) => {
     setFilters(newFilters);
@@ -81,6 +61,17 @@ export default function Home() {
     trackProductClick.mutate(productId);
   };
 
+  const resetAllFilters = () => {
+    handleFiltersChange({
+      search: '',
+      priceMin: 0,
+      priceMax: 20000000,
+      sortBy: 'popular',
+      category: undefined,
+      subcategory: undefined,
+    });
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Header
@@ -89,20 +80,15 @@ export default function Home() {
         onMenuToggle={toggleFilters}
       />
 
-      {/* Featured Carousel */}
       <FeaturedCarousel onProductClick={handleProductClick} />
 
-      {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
-
-        {/* Filters and Products Grid */}
         <section id="all-products">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold">Semua Produk</h2>
           </div>
           
           <div className="grid lg:grid-cols-4 gap-8">
-            {/* Filter Sidebar */}
             <div className="lg:col-span-1">
               <FilterSidebar
                 filters={filters}
@@ -112,13 +98,11 @@ export default function Home() {
               />
             </div>
             
-            {/* Products Grid */}
             <div className="lg:col-span-3">
-              {/* Loading state for initial fetch */}
               {isProductsLoading && (
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8" data-testid="loading-products">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
                   {[...Array(6)].map((_, i) => (
-                    <div key={i} className="bg-card rounded-xl border border-border p-4 loading-pulse">
+                    <div key={i} className="bg-card rounded-xl border border-border p-4 animate-pulse">
                       <div className="bg-muted h-48 rounded-lg mb-4"></div>
                       <div className="bg-muted h-4 rounded mb-2"></div>
                       <div className="bg-muted h-4 rounded w-2/3 mb-4"></div>
@@ -128,17 +112,16 @@ export default function Home() {
                 </div>
               )}
               
-              {/* Products results */}
               {!isProductsLoading && (
                 <div>
                   <div className="flex items-center justify-between mb-6">
-                    <span className="text-muted-foreground" data-testid="text-products-count">
+                    <span className="text-muted-foreground">
                       Menampilkan semua produk
                     </span>
                   </div>
                   
                   {allProducts.length > 0 ? (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-4" data-testid="grid-all-products">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                       {allProducts.map((product, index) => (
                         <ProductCard
                           key={`${product.id}-${index}`}
@@ -148,34 +131,25 @@ export default function Home() {
                       ))}
                     </div>
                   ) : (
-                    <div className="text-center py-16" data-testid="no-products-found">
+                    <div className="text-center py-16">
                       <Search className="h-16 w-16 text-muted-foreground mb-4 mx-auto" />
                       <h3 className="text-xl font-semibold mb-2">Produk tidak ditemukan</h3>
                       <p className="text-muted-foreground mb-4">Coba gunakan kata kunci lain atau ubah filter pencarian</p>
                       <Button
-                        onClick={() => handleFiltersChange({
-                          search: '',
-                          categories: [],
-                          priceMin: 0,
-                          priceMax: 20000000,
-                          sortBy: 'popular'
-                        })}
+                        onClick={resetAllFilters}
                         className="bg-emerald text-emerald-foreground hover:bg-emerald/90"
-                        data-testid="button-reset-search"
                       >
                         Reset Filter
                       </Button>
                     </div>
                   )}
 
-                  {/* Load More Button */}
                   <div className="mt-12 text-center">
                     {hasNextPage && (
                       <Button
                         onClick={() => fetchNextPage()}
                         disabled={isFetchingNextPage}
                         className="bg-emerald text-emerald-foreground hover:bg-emerald/90"
-                        data-testid="button-load-more"
                       >
                         {isFetchingNextPage ? (
                           <>
@@ -188,7 +162,6 @@ export default function Home() {
                       </Button>
                     )}
                   </div>
-
                 </div>
               )}
             </div>
@@ -196,7 +169,6 @@ export default function Home() {
         </section>
       </main>
 
-      {/* Footer */}
       <footer className="bg-card border-t border-border mt-16">
         <div className="container mx-auto px-4 py-12">
           <div className="grid md:grid-cols-4 gap-8 mb-8">
@@ -209,7 +181,7 @@ export default function Home() {
                   DAFTAR PRODUCT
                 </h3>
               </div>
-          <p className="text-muted-foreground text-sm mb-4">Platform untuk mencari dan menemukan produk-produk terbaik dari berbagai kategori.</p>
+              <p className="text-muted-foreground text-sm mb-4">Platform untuk mencari dan menemukan produk-produk terbaik dari berbagai kategori.</p>
               <div className="flex space-x-3">
                 <a href="#" className="w-8 h-8 bg-emerald text-white rounded-lg flex items-center justify-center hover:bg-emerald/80 transition-colors">
                   <i className="fab fa-facebook-f text-sm"></i>
@@ -231,7 +203,7 @@ export default function Home() {
                 </ul>
               ) : (
                 <ul className="space-y-2 text-sm text-muted-foreground">
-                  {categoryData.categories.slice(0, 5).map(category => (
+                  {Array.from(hierarchy.keys()).slice(0, 5).map(category => (
                     <li key={category}>
                       <Link to={`/${slugify(category)}`} className="hover:text-emerald transition-colors">
                         {category}
