@@ -48,7 +48,7 @@ interface BulkUpdateDialogProps {
 }
 
 export function BulkUpdateDialog({ isOpen, onOpenChange, onSubmit }: BulkUpdateDialogProps) {
-  const { data: categoriesData } = useCategories();
+  const { data: categories } = useCategories();
   const form = useForm<z.infer<typeof bulkUpdateSchema>>({
     resolver: zodResolver(bulkUpdateSchema),
     defaultValues: {},
@@ -100,7 +100,7 @@ export function BulkUpdateDialog({ isOpen, onOpenChange, onSubmit }: BulkUpdateD
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {categoriesData?.categories?.map((category) => (
+                      {categories?.map((category) => (
                         <SelectItem key={category} value={category}>
                           {category}
                         </SelectItem>

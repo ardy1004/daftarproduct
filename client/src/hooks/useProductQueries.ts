@@ -244,28 +244,27 @@ export function useLatestProducts(limit: number = 4) {
 }
 
 export function useCategories() {
-  return useQuery<CategoryHierarchy>({
-    queryKey: ['categoryHierarchy'], // Changed queryKey for clarity
+  return useQuery<string[]>({
+    queryKey: ['categoriesList'], // Use a new key to avoid cache conflicts
     queryFn: async () => {
       const { data, error } = await supabase
         .from('products')
-        .select('category, subcategory');
+        .select('category'); // Only select the category column
+
       if (error) throw new Error(error.message);
 
-      const hierarchy = new Map<string, Set<string>>();
+      if (!data) return [];
 
-      (data || []).forEach(item => {
+      // Use a Set to get unique category names
+      const uniqueCategories = new Set<string>();
+      data.forEach(item => {
         if (item.category) {
-          if (!hierarchy.has(item.category)) {
-            hierarchy.set(item.category, new Set<string>());
-          }
-          if (item.subcategory) {
-            hierarchy.get(item.category)!.add(item.subcategory);
-          }
+          uniqueCategories.add(item.category);
         }
       });
 
-      return hierarchy;
+      // Convert the Set to a sorted array
+      return Array.from(uniqueCategories).sort();
     },
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
   });

@@ -145,9 +145,37 @@ export function ProductManagementTab() {
     setIsBulkUpdateDialogOpen(true);
   };
 
-  const handleBulkUpdateSubmit = (updateData: Partial<z.infer<typeof productFormSchema>>) => {
+  const handleBulkUpdateSubmit = (dataFromDialog: { [key: string]: any }) => {
+    // Map camelCase from dialog form to snake_case for the database
+    const mappedData = {
+      product_name: dataFromDialog.productName,
+      category: dataFromDialog.category,
+      price: dataFromDialog.price,
+      sales: dataFromDialog.sales,
+      affiliate_url: dataFromDialog.affiliateUrl,
+      image_url: dataFromDialog.imageUrl,
+      is_featured: dataFromDialog.isFeatured,
+    };
+
+    // The dialog already filters out empty/null values, but this also removes any keys 
+    // that were undefined in the mapping (i.e., not present in the dialog form data).
+    const updatePayload = Object.fromEntries(
+      Object.entries(mappedData).filter(([, value]) => value !== undefined)
+    );
+
+    // If no fields were actually filled out, do nothing.
+    if (Object.keys(updatePayload).length === 0) {
+      toast({
+        variant: "default",
+        title: "No changes",
+        description: "You did not enter any values to update.",
+      });
+      setIsBulkUpdateDialogOpen(false);
+      return;
+    }
+
     const updatePromises = selectedProductIds.map(id => {
-      return updateProduct.mutateAsync({ id, ...updateData });
+      return updateProduct.mutateAsync({ id, ...updatePayload });
     });
 
     Promise.all(updatePromises)
