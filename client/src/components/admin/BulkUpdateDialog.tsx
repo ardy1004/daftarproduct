@@ -100,7 +100,7 @@ export function BulkUpdateDialog({ isOpen, onOpenChange, onSubmit }: BulkUpdateD
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {categories?.map((category) => (
+                      {Array.from(categories?.keys() || []).map((category) => (
                         <SelectItem key={category} value={category}>
                           {category}
                         </SelectItem>
