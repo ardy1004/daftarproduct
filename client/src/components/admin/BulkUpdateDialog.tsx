@@ -2,10 +2,24 @@ import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { Check, ChevronsUpDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Form,
   FormControl,
@@ -34,6 +48,7 @@ import { useCategories } from "@/hooks/useProductQueries";
 const bulkUpdateSchema = z.object({
   productName: z.string().optional(),
   category: z.string().optional(),
+  subcategory: z.string().optional(),
   price: z.coerce.number().optional(),
   sales: z.coerce.number().optional(),
   affiliateUrl: z.string().url().optional(),
@@ -49,13 +64,20 @@ interface BulkUpdateDialogProps {
 
 export function BulkUpdateDialog({ isOpen, onOpenChange, onSubmit }: BulkUpdateDialogProps) {
   const { data: categories } = useCategories();
+  const [isComboboxOpen, setIsComboboxOpen] = React.useState(false);
   const form = useForm<z.infer<typeof bulkUpdateSchema>>({
     resolver: zodResolver(bulkUpdateSchema),
     defaultValues: {},
   });
 
+  const watchedCategory = form.watch("category");
+  const subcategories = watchedCategory && categories?.get(watchedCategory) ? Array.from(categories.get(watchedCategory)!) : [];
+
+  React.useEffect(() => {
+    form.resetField("subcategory");
+  }, [watchedCategory, form]);
+
   const handleSubmit = (values: z.infer<typeof bulkUpdateSchema>) => {
-    // Filter out empty strings or nulls, only submit fields that have a value
     const filteredValues = Object.fromEntries(
       Object.entries(values).filter(([, value]) => value !== "" && value !== null && value !== undefined)
     );
@@ -107,6 +129,65 @@ export function BulkUpdateDialog({ isOpen, onOpenChange, onSubmit }: BulkUpdateD
                       ))}
                     </SelectContent>
                   </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="subcategory"
+              render={({ field }) => (
+                <FormItem className="flex flex-col">
+                  <FormLabel>Subcategory</FormLabel>
+                  <Popover open={isComboboxOpen} onOpenChange={setIsComboboxOpen}>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={isComboboxOpen}
+                          disabled={!watchedCategory}
+                          className={cn(
+                            "w-full justify-between",
+                            !field.value && "text-muted-foreground"
+                          )}
+                        >
+                          {field.value || "Select or type a subcategory..."}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                      <Command>
+                        <CommandInput
+                          placeholder="Search or type new subcategory..."
+                          onValueChange={field.onChange}
+                          value={field.value || ''}
+                        />
+                        <CommandEmpty>No subcategory found. Type to create.</CommandEmpty>
+                        <CommandGroup>
+                          {subcategories.map((subcategory) => (
+                            <CommandItem
+                              value={subcategory}
+                              key={subcategory}
+                              onSelect={() => {
+                                form.setValue("subcategory", subcategory);
+                                setIsComboboxOpen(false);
+                              }}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  subcategory === field.value ? "opacity-100" : "opacity-0"
+                                )}
+                              />
+                              {subcategory}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                   <FormMessage />
                 </FormItem>
               )}

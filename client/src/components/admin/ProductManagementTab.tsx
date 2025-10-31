@@ -150,6 +150,7 @@ export function ProductManagementTab() {
     const mappedData = {
       product_name: dataFromDialog.productName,
       category: dataFromDialog.category,
+      subcategory: dataFromDialog.subcategory,
       price: dataFromDialog.price,
       sales: dataFromDialog.sales,
       affiliate_url: dataFromDialog.affiliateUrl,

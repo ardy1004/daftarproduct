@@ -122,23 +122,35 @@ export function FilterSidebar({ filters, onFiltersChange, showFilters, onToggleF
                     {categoryName}
                   </Label>
                 </div>
-                {isCategoryOpen && subcategories.length > 0 && (
-                  <ul className="space-y-2 pl-8 pt-2">
-                    {subcategories.map(subcategoryName => {
-                      const currentSubcategorySlug = slugify(subcategoryName);
-                      const isSubcategoryActive = subcategorySlug === currentSubcategorySlug;
-                      return (
-                        <li key={subcategoryName}>
-                          <Link 
-                            to={`/${currentCategorySlug}/${currentSubcategorySlug}`} 
-                            className={`text-sm hover:text-emerald transition-colors ${isSubcategoryActive ? 'text-emerald font-bold' : 'text-muted-foreground'}`}>
-                            {subcategoryName}
-                          </Link>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                )}
+                {isCategoryOpen && subcategories.length > 0 && (() => {
+                  const handleSubcategoryClick = (clickedSubcategorySlug: string) => {
+                    if (clickedSubcategorySlug === subcategorySlug) {
+                      // Toggle off: navigate to parent category
+                      navigate(`/${currentCategorySlug}`);
+                    } else {
+                      // Toggle on: navigate to subcategory
+                      navigate(`/${currentCategorySlug}/${clickedSubcategorySlug}`);
+                    }
+                  };
+
+                  return (
+                    <ul className="space-y-2 pl-8 pt-2">
+                      {subcategories.map(subcategoryName => {
+                        const currentSubcategorySlug = slugify(subcategoryName);
+                        const isSubcategoryActive = subcategorySlug === currentSubcategorySlug;
+                        return (
+                          <li key={subcategoryName}>
+                            <button
+                              onClick={() => handleSubcategoryClick(currentSubcategorySlug)}
+                              className={`text-sm text-left hover:text-emerald transition-colors ${isSubcategoryActive ? 'text-emerald font-bold' : 'text-muted-foreground'}`}>
+                              {subcategoryName}
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  );
+                })()}
               </div>
             );
           })}
