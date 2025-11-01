@@ -80,7 +80,7 @@ export default function Home() {
         onMenuToggle={toggleFilters}
       />
 
-      <FeaturedCarousel onProductClick={handleProductClick} />
+      <FeaturedCarousel onProductClick={handleProductClick} activeCategory={filters.category} />
 
       <main className="container mx-auto px-4 py-8">
         <section id="all-products">

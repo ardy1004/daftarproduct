@@ -209,15 +209,21 @@ export function useInfiniteProducts(filters?: FilterState) {
   });
 }
 
-export function useFeaturedProducts() {
+export function useFeaturedProducts(category?: string) {
   return useQuery<Product[]>({
-    queryKey: ['featuredProducts'],
+    queryKey: ['featuredProducts', category],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('products')
         .select('*')
         .eq('is_featured', true)
         .order('featured_order', { ascending: true });
+
+      if (category) {
+        query = query.eq('category', category);
+      }
+
+      const { data, error } = await query;
       if (error) throw new Error(error.message);
       return data || [];
     },

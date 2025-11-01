@@ -7,21 +7,26 @@ import type { Product } from '@/types';
 
 interface FeaturedCarouselProps {
   onProductClick: (productId: string) => void;
+  activeCategory?: string;
 }
 
-export function FeaturedCarousel({ onProductClick }: FeaturedCarouselProps) {
-  const { data: products = [], isLoading } = useFeaturedProducts();
+export function FeaturedCarousel({ onProductClick, activeCategory }: FeaturedCarouselProps) {
+  const { data: products = [], isLoading } = useFeaturedProducts(activeCategory);
   const [currentSlide, setCurrentSlide] = useState(0);
 
   useEffect(() => {
     if (products.length === 0) return;
-    
+
     const interval = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % products.length);
     }, 4000);
-    
+
     return () => clearInterval(interval);
   }, [products.length]);
+
+  useEffect(() => {
+    setCurrentSlide(0);
+  }, [activeCategory]);
 
   const handleProductClick = (product: Product) => {
     onProductClick(product.id);
