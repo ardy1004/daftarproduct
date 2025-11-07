@@ -4,6 +4,7 @@ import { Search, Moon, Sun, Menu, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useTheme } from '@/hooks/useTheme';
+import SearchBar from '@/components/SearchBar';
 
 interface HeaderProps {
   searchQuery: string;
@@ -30,19 +31,7 @@ export function Header({ searchQuery, onSearchChange, onMenuToggle }: HeaderProp
           
           {/* Search Bar (Desktop) */}
           <div className="hidden md:flex flex-1 max-w-2xl mx-8">
-            <div className="relative w-full">
-              <Input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => onSearchChange(e.target.value)}
-                placeholder="Cari produk, kategori, atau brand..."
-                className="w-full px-4 py-3 pr-12 bg-muted rounded-xl border border-border focus:outline-none focus:ring-2 focus:ring-emerald focus:border-emerald transition-all"
-                data-testid="input-search-desktop"
-              />
-              <button className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-emerald transition-colors" data-testid="button-search-desktop">
-                <Search className="h-5 w-5" />
-              </button>
-            </div>
+            <SearchBar />
           </div>
           
           {/* Header Actions */}
@@ -74,19 +63,7 @@ export function Header({ searchQuery, onSearchChange, onMenuToggle }: HeaderProp
         
         {/* Mobile Search */}
         <div className="md:hidden mt-4">
-          <div className="relative">
-            <Input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => onSearchChange(e.target.value)}
-              placeholder="Cari produk..."
-              className="w-full px-4 py-3 pr-12 bg-muted rounded-xl border border-border focus:outline-none focus:ring-2 focus:ring-emerald focus:border-emerald"
-              data-testid="input-search-mobile"
-            />
-            <button className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" data-testid="button-search-mobile">
-              <Search className="h-4 w-4" />
-            </button>
-          </div>
+          <SearchBar />
         </div>
       </div>
     </header>
