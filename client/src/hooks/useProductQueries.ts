@@ -113,8 +113,8 @@ export function useProducts(filters?: FilterState) {
       console.log('Final processed data:', processedData.length, 'products');
       return processedData;
     },
-    staleTime: 0, // Don't cache this query
-    gcTime: 0, // Don't cache this query (React Query v5)
+    staleTime: 30 * 1000, // 30 seconds for featured products
+    gcTime: 2 * 60 * 1000, // 2 minutes cache time
   });
 }
 
@@ -204,8 +204,8 @@ export function useInfiniteProducts(filters?: FilterState) {
       }
       return allPages.length;
     },
-    staleTime: 0, // Don't cache this query
-    gcTime: 0, // Don't cache this query (React Query v5)
+    staleTime: 2 * 60 * 1000, // 2 minutes for admin data
+    gcTime: 5 * 60 * 1000, // 5 minutes cache time
   });
 }
 
@@ -227,8 +227,8 @@ export function useFeaturedProducts(category?: string) {
       if (error) throw new Error(error.message);
       return data || [];
     },
-    staleTime: 0, // Don't cache this query
-    gcTime: 0, // Don't cache this query (React Query v5)
+    staleTime: 60 * 1000, // 1 minute for latest products
+    gcTime: 5 * 60 * 1000, // 5 minutes cache time
   });
 }
 
@@ -244,8 +244,8 @@ export function useLatestProducts(limit: number = 4) {
       if (error) throw new Error(error.message);
       return data || [];
     },
-    staleTime: 0, // Don't cache this query
-    gcTime: 0, // Don't cache this query (React Query v5)
+    staleTime: 30 * 1000, // 30 seconds for non-featured products
+    gcTime: 2 * 60 * 1000, // 2 minutes cache time
   });
 }
 
@@ -273,7 +273,7 @@ export function useCategories() {
 
       return hierarchy;
     },
-    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+    staleTime: 1000 * 60 * 10, // Cache for 10 minutes - categories don't change often
   });
 }
 
