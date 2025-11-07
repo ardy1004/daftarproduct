@@ -63,6 +63,8 @@ export function ProductManagementTab() {
   const [csvExportData, setCsvExportData] = useState<any[]>([]);
   const [searchById, setSearchById] = useState('');
   const [searchByName, setSearchByName] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(50); // Show 50 products per page for better performance
   const csvLinkRef = useRef<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -74,7 +76,13 @@ export function ProductManagementTab() {
     };
   }, []);
 
-  const { data: products = [], isLoading: isLoadingProducts } = useProducts();
+  const { data: allProducts = [], isLoading: isLoadingProducts } = useProducts();
+
+  // Implement pagination
+  const totalPages = Math.ceil(allProducts.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const products = allProducts.slice(startIndex, endIndex);
 
   // Debug logging to check total products
   console.log('Total products in database:', products.length);
@@ -504,14 +512,46 @@ export function ProductManagementTab() {
           {isLoadingProducts ? (
             <p>Loading products...</p>
           ) : (
-            <ProductDataTable 
-              products={filteredProducts} 
-              selectedProductIds={selectedProductIds}
-              onSelectionChange={setSelectedProductIds}
-              onEdit={handleEditProduct} 
-              onDelete={handleDeleteProduct} 
-              onGenerateRating={handleGenerateRating} 
-            />
+            <>
+              <ProductDataTable
+                products={filteredProducts}
+                selectedProductIds={selectedProductIds}
+                onSelectionChange={setSelectedProductIds}
+                onEdit={handleEditProduct}
+                onDelete={handleDeleteProduct}
+                onGenerateRating={handleGenerateRating}
+              />
+
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between mt-6">
+                  <div className="text-sm text-muted-foreground">
+                    Showing {startIndex + 1}-{Math.min(endIndex, allProducts.length)} of {allProducts.length} products
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                      disabled={currentPage === 1}
+                    >
+                      Previous
+                    </Button>
+                    <span className="text-sm">
+                      Page {currentPage} of {totalPages}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                      disabled={currentPage === totalPages}
+                    >
+                      Next
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </CardContent>
       </Card>
