@@ -31,7 +31,10 @@ export function Header({ searchQuery, onSearchChange, onMenuToggle }: HeaderProp
           
           {/* Search Bar (Desktop) */}
           <div className="hidden md:flex flex-1 max-w-2xl mx-8">
-            <SearchBar />
+            <SearchBar
+              value={searchQuery}
+              onChange={onSearchChange}
+            />
           </div>
           
           {/* Header Actions */}
@@ -63,7 +66,10 @@ export function Header({ searchQuery, onSearchChange, onMenuToggle }: HeaderProp
         
         {/* Mobile Search */}
         <div className="md:hidden mt-4">
-          <SearchBar />
+          <SearchBar
+            value={searchQuery}
+            onChange={onSearchChange}
+          />
         </div>
       </div>
     </header>
