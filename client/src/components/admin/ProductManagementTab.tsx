@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import * as z from "zod";
 import { Plus, Upload, Trash2, Star, Edit, Download, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -66,6 +66,14 @@ export function ProductManagementTab() {
   const csvLinkRef = useRef<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Cleanup function to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      // Clear any large data structures when component unmounts
+      setCsvExportData([]);
+    };
+  }, []);
+
   const { data: products = [], isLoading: isLoadingProducts } = useProducts();
 
   // Debug logging to check total products
@@ -124,28 +132,64 @@ export function ProductManagementTab() {
     setIsDeleteConfirmOpen(true);
   };
 
-  const handleBulkGenerateRating = () => {
-    const possibleRatings = [4, 4.5, 5];
-    const updatePromises = selectedProductIds.map(id => {
-      const randomRating = possibleRatings[Math.floor(Math.random() * possibleRatings.length)];
-      return updateProduct.mutateAsync({ id, rating: randomRating });
-    });
+  const handleBulkGenerateRating = async () => {
+    if (selectedProductIds.length === 0) return;
 
-    Promise.all(updatePromises)
-      .then(() => {
-        toast({ title: "Success", description: `${selectedProductIds.length} product(s) ratings generated successfully.` });
-        setSelectedProductIds([]);
-      })
-      .catch((error) => {
-        toast({ variant: "destructive", title: "Error", description: error.message });
+    const possibleRatings = [4, 4.5, 5];
+    let successCount = 0;
+    let errorCount = 0;
+    const errors: string[] = [];
+
+    // Process in batches to avoid overwhelming the server
+    const batchSize = 10;
+    for (let i = 0; i < selectedProductIds.length; i += batchSize) {
+      const batch = selectedProductIds.slice(i, i + batchSize);
+
+      const batchPromises = batch.map(async (id) => {
+        try {
+          const randomRating = possibleRatings[Math.floor(Math.random() * possibleRatings.length)];
+          await updateProduct.mutateAsync({ id, rating: randomRating });
+          successCount++;
+        } catch (error) {
+          errorCount++;
+          errors.push(`Product ${id}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
       });
+
+      // Wait for current batch to complete before starting next batch
+      await Promise.allSettled(batchPromises);
+    }
+
+    // Show results
+    if (errorCount === 0) {
+      toast({
+        title: "Success",
+        description: `${successCount} product(s) ratings generated successfully.`
+      });
+    } else if (successCount === 0) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: `Failed to generate ratings for ${errorCount} product(s).`
+      });
+    } else {
+      toast({
+        title: "Partial Success",
+        description: `${successCount} ratings generated, ${errorCount} failed. Check console for details.`
+      });
+      console.error('Bulk rating generation errors:', errors);
+    }
+
+    setSelectedProductIds([]);
   };
 
   const handleBulkUpdateClick = () => {
     setIsBulkUpdateDialogOpen(true);
   };
 
-  const handleBulkUpdateSubmit = (dataFromDialog: { [key: string]: any }) => {
+  const handleBulkUpdateSubmit = async (dataFromDialog: { [key: string]: any }) => {
+    if (selectedProductIds.length === 0) return;
+
     // Map camelCase from dialog form to snake_case for the database
     const mappedData = {
       product_name: dataFromDialog.productName,
@@ -158,7 +202,7 @@ export function ProductManagementTab() {
       is_featured: dataFromDialog.isFeatured,
     };
 
-    // The dialog already filters out empty/null values, but this also removes any keys 
+    // The dialog already filters out empty/null values, but this also removes any keys
     // that were undefined in the mapping (i.e., not present in the dialog form data).
     const updatePayload = Object.fromEntries(
       Object.entries(mappedData).filter(([, value]) => value !== undefined)
@@ -175,36 +219,102 @@ export function ProductManagementTab() {
       return;
     }
 
-    const updatePromises = selectedProductIds.map(id => {
-      return updateProduct.mutateAsync({ id, ...updatePayload });
-    });
+    let successCount = 0;
+    let errorCount = 0;
+    const errors: string[] = [];
 
-    Promise.all(updatePromises)
-      .then(() => {
-        toast({ title: "Success", description: `${selectedProductIds.length} product(s) updated successfully.` });
-        setIsBulkUpdateDialogOpen(false);
-        setSelectedProductIds([]);
-      })
-      .catch((error) => {
-        toast({ variant: "destructive", title: "Error", description: error.message });
+    // Process in batches to avoid overwhelming the server
+    const batchSize = 5; // Smaller batch size for updates
+    for (let i = 0; i < selectedProductIds.length; i += batchSize) {
+      const batch = selectedProductIds.slice(i, i + batchSize);
+
+      const batchPromises = batch.map(async (id) => {
+        try {
+          await updateProduct.mutateAsync({ id, ...updatePayload });
+          successCount++;
+        } catch (error) {
+          errorCount++;
+          errors.push(`Product ${id}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
       });
+
+      // Wait for current batch to complete before starting next batch
+      await Promise.allSettled(batchPromises);
+    }
+
+    // Show results
+    if (errorCount === 0) {
+      toast({
+        title: "Success",
+        description: `${successCount} product(s) updated successfully.`
+      });
+    } else if (successCount === 0) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: `Failed to update ${errorCount} product(s).`
+      });
+    } else {
+      toast({
+        title: "Partial Success",
+        description: `${successCount} products updated, ${errorCount} failed. Check console for details.`
+      });
+      console.error('Bulk update errors:', errors);
+    }
+
+    setIsBulkUpdateDialogOpen(false);
+    setSelectedProductIds([]);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     const idsToDelete = selectedProductIds.length > 0 ? selectedProductIds : (selectedProduct ? [selectedProduct.id] : []);
     if (idsToDelete.length === 0) return;
 
-    const deletePromises = idsToDelete.map(id => deleteProduct.mutateAsync(id));
+    let successCount = 0;
+    let errorCount = 0;
+    const errors: string[] = [];
 
-    Promise.all(deletePromises)
-      .then(() => {
-        toast({ title: "Success", description: `${idsToDelete.length} product(s) deleted successfully.` });
-        setIsDeleteConfirmOpen(false);
-        setSelectedProductIds([]);
-      })
-      .catch((error) => {
-        toast({ variant: "destructive", title: "Error", description: error.message });
+    // Process deletions in batches to avoid overwhelming the server
+    const batchSize = 10;
+    for (let i = 0; i < idsToDelete.length; i += batchSize) {
+      const batch = idsToDelete.slice(i, i + batchSize);
+
+      const batchPromises = batch.map(async (id) => {
+        try {
+          await deleteProduct.mutateAsync(id);
+          successCount++;
+        } catch (error) {
+          errorCount++;
+          errors.push(`Product ${id}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        }
       });
+
+      // Wait for current batch to complete before starting next batch
+      await Promise.allSettled(batchPromises);
+    }
+
+    // Show results
+    if (errorCount === 0) {
+      toast({
+        title: "Success",
+        description: `${successCount} product(s) deleted successfully.`
+      });
+    } else if (successCount === 0) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: `Failed to delete ${errorCount} product(s).`
+      });
+    } else {
+      toast({
+        title: "Partial Success",
+        description: `${successCount} products deleted, ${errorCount} failed. Check console for details.`
+      });
+      console.error('Bulk delete errors:', errors);
+    }
+
+    setIsDeleteConfirmOpen(false);
+    setSelectedProductIds([]);
   };
 
   const handleFormSubmit = (values: z.infer<typeof productFormSchema>) => {
@@ -262,9 +372,30 @@ export function ProductManagementTab() {
       { label: "Featured Order", key: "featured_order" },
       { label: "Rating", key: "rating" },
     ];
-    setCsvExportData(products); // products is already an array of objects
+
+    // Create a copy of the data to avoid memory leaks
+    const exportData = products.map(product => ({
+      product_id: product.product_id,
+      product_name: product.product_name,
+      category: product.category,
+      original_price: product.original_price,
+      price: product.price,
+      sales: product.sales,
+      affiliate_url: product.affiliate_url,
+      image_url: product.image_url,
+      is_featured: product.is_featured,
+      featured_order: product.featured_order,
+      rating: product.rating,
+    }));
+
+    setCsvExportData(exportData);
+
+    // Clear the data after a delay to prevent memory leaks
     setTimeout(() => {
-      csvLinkRef.current.link.click();
+      setCsvExportData([]);
+      if (csvLinkRef.current?.link) {
+        csvLinkRef.current.link.click();
+      }
     }, 100);
   };
 
