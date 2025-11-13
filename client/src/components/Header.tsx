@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, Moon, Sun, Menu, Settings } from 'lucide-react';
+import { Search, Menu, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useTheme } from '@/hooks/useTheme';
@@ -13,7 +13,7 @@ interface HeaderProps {
 }
 
 export function Header({ searchQuery, onSearchChange, onMenuToggle }: HeaderProps) {
-  const { theme, toggleTheme } = useTheme();
+  const { theme } = useTheme();
 
   return (
     <header className="sticky top-0 z-50 bg-card/80 backdrop-blur-md border-b border-border shadow-sm">
@@ -39,17 +39,6 @@ export function Header({ searchQuery, onSearchChange, onMenuToggle }: HeaderProp
           
           {/* Header Actions */}
           <div className="flex items-center space-x-3">
-            {/* Dark Mode Toggle */}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={toggleTheme}
-              className="p-2 rounded-lg bg-muted hover:bg-accent hover:text-accent-foreground transition-all duration-200"
-              data-testid="button-theme-toggle"
-            >
-              {theme === 'light' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
-            </Button>
-            
             {/* Mobile Menu Toggle */}
             <Button
               variant="ghost"

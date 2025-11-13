@@ -41,7 +41,7 @@ function App() {
     <ErrorBoundary>
       <HelmetProvider>
         <QueryClientProvider client={queryClient}>
-          <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
+          <ThemeProvider storageKey="vite-ui-theme">
             <CategoryProvider>
               <TrackingScripts />
               <Suspense fallback={<LoadingFallback />}>

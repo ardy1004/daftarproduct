@@ -1,31 +1,19 @@
 import { createContext, useContext, useEffect, useLayoutEffect, useState } from 'react';
 
-type Theme = 'light' | 'dark';
+type Theme = 'light';
 
 interface ThemeContextType {
   theme: Theme;
-  toggleTheme: () => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-export function ThemeProvider({ children, defaultTheme = 'light', storageKey = 'theme' }: { children: React.ReactNode; defaultTheme?: Theme; storageKey?: string }) {
-  const [theme, setTheme] = useState<Theme>(defaultTheme);
-
-  useEffect(() => {
-    if (typeof localStorage !== 'undefined') {
-      const savedTheme = localStorage.getItem(storageKey) as Theme;
-      if (savedTheme) {
-        setTheme(savedTheme);
-      } else if (typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-        setTheme('dark');
-      }
-    }
-  }, [storageKey]);
+export function ThemeProvider({ children, storageKey = 'theme' }: { children: React.ReactNode; storageKey?: string }) {
+  const [theme, setTheme] = useState<Theme>('light');
 
   useLayoutEffect(() => {
     const root = window.document.documentElement;
-    root.classList.remove('light', 'dark');
+    root.classList.remove('dark');
     root.classList.add(theme);
   }, [theme]);
 
@@ -35,12 +23,8 @@ export function ThemeProvider({ children, defaultTheme = 'light', storageKey = '
     }
   }, [theme, storageKey]);
 
-  const toggleTheme = () => {
-    setTheme(theme === 'light' ? 'dark' : 'light');
-  };
-
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme }}>
+    <ThemeContext.Provider value={{ theme }}>
       {children}
     </ThemeContext.Provider>
   );
