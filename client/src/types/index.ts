@@ -10,6 +10,9 @@ export interface Product {
   affiliate_url: string | null;
   image_url: string | null;
   rating: number | null;
+  commission: string | number | null;
+  dikirim_dari: string | null;
+  toko: string | null;
   is_featured: boolean | null;
   featured_order: number | null;
   created_at: string | null;

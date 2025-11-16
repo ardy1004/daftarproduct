@@ -36,15 +36,18 @@ import Papa from 'papaparse';
 import { Input } from '@/components/ui/input';
 
 const productFormSchema = z.object({
-  // Allow empty string, then transform to null for consistency
+  // Allow empty string, then transform to undefined for consistency
   product_id: z.string().optional().transform(val => val === "" ? undefined : val),
   product_name: z.string().min(3),
   category: z.string().min(2),
-  subcategory: z.string().optional().transform(val => val === "" ? null : val),
+  subcategory: z.string().optional().transform(val => val === "" ? undefined : val),
   // Coerce to number, allow it to be optional or null
   original_price: z.coerce.number().min(0).optional(),
   price: z.coerce.number().min(0),
   sales: z.coerce.number().min(0).optional(),
+  commission: z.coerce.number().min(0).optional(),
+  dikirim_dari: z.string().optional(),
+  toko: z.string().optional(),
   affiliate_url: z.string().url(),
   image_url: z.string().url(),
   is_featured: z.boolean().default(false),
@@ -205,6 +208,9 @@ export function ProductManagementTab() {
       subcategory: dataFromDialog.subcategory,
       price: dataFromDialog.price,
       sales: dataFromDialog.sales,
+      commission: dataFromDialog.commission,
+      dikirim_dari: dataFromDialog.dikirim_dari,
+      toko: dataFromDialog.toko,
       affiliate_url: dataFromDialog.affiliateUrl,
       image_url: dataFromDialog.imageUrl,
       is_featured: dataFromDialog.isFeatured,
@@ -368,32 +374,42 @@ export function ProductManagementTab() {
 
   const handleExport = () => {
     const headers = [
-      { label: "Product ID", key: "product_id" },
-      { label: "Product Name", key: "product_name" },
-      { label: "Category", key: "category" },
-      { label: "Original Price", key: "original_price" },
-      { label: "Price", key: "price" },
-      { label: "Sales", key: "sales" },
-      { label: "Affiliate URL", key: "affiliate_url" },
-      { label: "Image URL", key: "image_url" },
-      { label: "Is Featured", key: "is_featured" },
-      { label: "Featured Order", key: "featured_order" },
-      { label: "Rating", key: "rating" },
+      { label: "product_id", key: "product_id" },
+      { label: "product_name", key: "product_name" },
+      { label: "price", key: "price" },
+      { label: "sales", key: "sales" },
+      { label: "category", key: "category" },
+      { label: "subcategory", key: "subcategory" },
+      { label: "affiliate_url", key: "affiliate_url" },
+      { label: "image_url", key: "image_url" },
+      { label: "original_price", key: "original_price" },
+      { label: "dikirim_dari", key: "dikirim_dari" },
+      { label: "toko", key: "toko" },
+      { label: "komisi", key: "commission" },
+      { label: "is_featured", key: "is_featured" },
+      { label: "featured_order", key: "featured_order" },
+      { label: "rating", key: "rating" },
+      { label: "stock_available", key: "stock_available" },
     ];
 
-    // Create a copy of the data to avoid memory leaks
-    const exportData = products.map(product => ({
+    // Create a copy of all products data to export everything
+    const exportData = allProducts.map(product => ({
       product_id: product.product_id,
       product_name: product.product_name,
       category: product.category,
+      subcategory: product.subcategory,
       original_price: product.original_price,
       price: product.price,
       sales: product.sales,
+      commission: product.commission,
+      dikirim_dari: product.dikirim_dari,
+      toko: product.toko,
       affiliate_url: product.affiliate_url,
       image_url: product.image_url,
       is_featured: product.is_featured,
       featured_order: product.featured_order,
       rating: product.rating,
+      stock_available: product.stock_available,
     }));
 
     setCsvExportData(exportData);
@@ -423,13 +439,94 @@ export function ProductManagementTab() {
         let successfulImports = 0;
         let failedImports = 0;
 
-        const importPromises = parsedData.map((item, index) => {
+        const importPromises = parsedData.map(async (item, index) => {
+          console.log(`[DEBUG] Row ${index + 2} - Original CSV data:`, item);
+
+          // Map CSV column names to database field names
+          const mappedItem = {
+            ...item,
+            // Map "komisi" from CSV to "commission" for database (provide default if missing)
+            commission: item.komisi ? parseFloat(item.komisi) : (item.commission ? parseFloat(item.commission) : 0),
+            // Ensure other fields are properly mapped (provide defaults if missing)
+            dikirim_dari: item.dikirim_dari || '',
+            toko: item.toko || '',
+            // Ensure numeric fields are parsed as numbers
+            price: item.price ? parseFloat(item.price) : 0,
+            original_price: item.original_price ? parseFloat(item.original_price) : undefined,
+            sales: item.sales ? parseInt(item.sales) : 0,
+            rating: item.rating ? parseFloat(item.rating) : undefined,
+            featured_order: item.featured_order ? parseInt(item.featured_order) : undefined,
+          };
+
+          // Remove the original "komisi" key if it exists to avoid conflicts
+          if (mappedItem.hasOwnProperty('komisi')) {
+            delete (mappedItem as any).komisi;
+          }
+
+          // Remove any undefined values to clean up the data
+          Object.keys(mappedItem).forEach(key => {
+            if (mappedItem[key] === undefined) {
+              delete mappedItem[key];
+            }
+          });
+
+          console.log(`[DEBUG] Row ${index + 2} - Mapped data:`, mappedItem);
+
           // Use schema to validate and parse each row
-          const validationResult = productFormSchema.safeParse(item);
+          const validationResult = productFormSchema.safeParse(mappedItem);
+
+          console.log(`[DEBUG] Row ${index + 2} - Validation result:`, validationResult.success ? 'SUCCESS' : 'FAILED');
+          if (!validationResult.success) {
+            console.log(`[DEBUG] Row ${index + 2} - Validation errors:`, validationResult.error.errors);
+          } else {
+            console.log(`[DEBUG] Row ${index + 2} - Validated data:`, validationResult.data);
+          }
 
           if (validationResult.success) {
+            // Ensure required fields are present and clean undefined values
+            const data = validationResult.data;
+            const cleanData: z.infer<typeof productFormSchema> = {
+              product_name: data.product_name,
+              category: data.category,
+              price: data.price,
+              affiliate_url: data.affiliate_url,
+              image_url: data.image_url,
+              is_featured: data.is_featured ?? false,
+              stock_available: data.stock_available ?? true,
+              ...(data.product_id && { product_id: data.product_id }),
+              ...(data.subcategory && { subcategory: data.subcategory }),
+              ...(data.original_price !== undefined && { original_price: data.original_price }),
+              ...(data.sales !== undefined && { sales: data.sales }),
+              ...(data.commission !== undefined && { commission: data.commission }),
+              ...(data.dikirim_dari && { dikirim_dari: data.dikirim_dari }),
+              ...(data.toko && { toko: data.toko }),
+              ...(data.featured_order !== undefined && { featured_order: data.featured_order }),
+              ...(data.rating !== undefined && { rating: data.rating }),
+            };
+
+            console.log(`[DEBUG] Row ${index + 2} - Clean data for Supabase:`, cleanData);
+
             successfulImports++;
-            return addProduct.mutateAsync(validationResult.data);
+            try {
+              const result = await addProduct.mutateAsync(cleanData);
+              console.log(`[DEBUG] Row ${index + 2} - Insert successful:`, result);
+              return result;
+            } catch (insertError: any) {
+              console.error(`[DEBUG] Row ${index + 2} - Insert failed:`, {
+                error: insertError,
+                message: insertError?.message,
+                details: insertError?.details,
+                hint: insertError?.hint,
+                code: insertError?.code
+              });
+
+              // Check if it's an RLS policy error
+              if (insertError?.message?.includes('policy') || insertError?.code === '42501') {
+                console.error(`[DEBUG] Row ${index + 2} - RLS Policy Error: User may not have admin role in profiles table`);
+              }
+
+              throw insertError; // Re-throw to be caught by Promise.allSettled
+            }
           } else {
             failedImports++;
             // Log detailed error for the user
@@ -439,13 +536,24 @@ export function ProductManagementTab() {
               title: `Validation Error on Row ${index + 2}`,
               description: `Skipping row. Details: ${errorMessages}`,
             });
-            return Promise.resolve(); // Resolve to not break Promise.all
+            return Promise.resolve(); // Resolve to not break Promise.allSettled
           }
         });
 
-        Promise.all(importPromises)
-          .then(() => {
-            toast({ title: "Import Complete", description: `${successfulImports} products imported successfully. ${failedImports} rows failed.` });
+        Promise.allSettled(importPromises)
+          .then((results) => {
+            const additionalFailures = results.filter(result => result.status === 'rejected').length;
+            failedImports += additionalFailures;
+
+            if (additionalFailures > 0) {
+              console.error('Import failures:', results.filter(result => result.status === 'rejected'));
+            }
+
+            toast({
+              title: "Import Complete",
+              description: `${successfulImports} products imported successfully. ${failedImports} rows failed.`,
+              variant: failedImports > 0 ? "destructive" : "default"
+            });
           })
           .catch((error) => {
             toast({ variant: "destructive", title: "Import Error", description: `An unexpected error occurred during import: ${error.message}` });

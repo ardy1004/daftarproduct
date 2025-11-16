@@ -66,6 +66,9 @@ export function ProductDataTable({
             <TableHead>Name</TableHead>
             <TableHead>Category</TableHead>
             <TableHead>Rating</TableHead>
+            <TableHead>Komisi</TableHead>
+            <TableHead>Dikirim Dari</TableHead>
+            <TableHead>Toko</TableHead>
             <TableHead className="hidden md:table-cell">Price</TableHead>
             <TableHead>
               <span className="sr-only">Actions</span>
@@ -87,6 +90,9 @@ export function ProductDataTable({
                 <TableCell className="font-medium">{product.product_name}</TableCell>
                 <TableCell>{product.category}</TableCell>
                 <TableCell>{product.rating || 'N/A'}</TableCell>
+                <TableCell>{product.commission ? formatPrice(product.commission) : 'N/A'}</TableCell>
+                <TableCell>{product.dikirim_dari || 'N/A'}</TableCell>
+                <TableCell>{product.toko || 'N/A'}</TableCell>
                 <TableCell className="hidden md:table-cell">{formatPrice(product.price)}</TableCell>
                 <TableCell>
                   <DropdownMenu>
@@ -118,7 +124,7 @@ export function ProductDataTable({
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={7} className="h-24 text-center">
+              <TableCell colSpan={10} className="h-24 text-center">
                 No results.
               </TableCell>
             </TableRow>

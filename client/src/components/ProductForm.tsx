@@ -33,6 +33,9 @@ const formSchema = z.object({
   is_featured: z.boolean().optional().default(false),
   featured_order: z.coerce.number().optional(),
   rating: z.coerce.number().optional(),
+  commission: z.coerce.number().min(0, "Commission must be a positive number").optional(),
+  dikirim_dari: z.string().optional(),
+  toko: z.string().optional(),
   stock_available: z.boolean().default(true),
 });
 
@@ -57,6 +60,9 @@ export function ProductForm({ product, onSubmit, isSubmitting }: ProductFormProp
       image_url: product?.image_url || "",
       is_featured: product?.is_featured || false,
       featured_order: product?.featured_order || 0,
+      commission: product?.commission != null ? (typeof product.commission === 'string' ? parseFloat(product.commission) : product.commission) : 0,
+      dikirim_dari: product?.dikirim_dari || "",
+      toko: product?.toko || "",
       stock_available: product?.stock_available ?? true,
     },
   });
@@ -131,7 +137,7 @@ export function ProductForm({ product, onSubmit, isSubmitting }: ProductFormProp
             )}
           />
         </div>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-3 gap-4">
           <FormField
             control={form.control}
             name="price"
@@ -153,6 +159,47 @@ export function ProductForm({ product, onSubmit, isSubmitting }: ProductFormProp
                 <FormLabel>Total Sold</FormLabel>
                 <FormControl>
                   <Input type="number" placeholder="e.g. 150" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="commission"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Komisi (%)</FormLabel>
+                <FormControl>
+                  <Input type="number" placeholder="e.g. 5" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="dikirim_dari"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Dikirim Dari</FormLabel>
+                <FormControl>
+                  <Input placeholder="e.g. Jakarta" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="toko"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Toko</FormLabel>
+                <FormControl>
+                  <Input placeholder="e.g. Toko ABC" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

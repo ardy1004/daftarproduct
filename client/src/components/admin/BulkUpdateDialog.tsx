@@ -51,6 +51,9 @@ const bulkUpdateSchema = z.object({
   subcategory: z.string().optional(),
   price: z.coerce.number().optional(),
   sales: z.coerce.number().optional(),
+  commission: z.coerce.number().optional(),
+  dikirim_dari: z.string().optional(),
+  toko: z.string().optional(),
   affiliateUrl: z.string().url().optional(),
   imageUrl: z.string().url().optional(),
   isFeatured: z.boolean().optional(),
@@ -213,6 +216,45 @@ export function BulkUpdateDialog({ isOpen, onOpenChange, onSubmit }: BulkUpdateD
                   <FormLabel>Sales</FormLabel>
                   <FormControl>
                     <Input type="number" placeholder="New Sales Count" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="commission"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Commission (%)</FormLabel>
+                  <FormControl>
+                    <Input type="number" placeholder="New Commission Percentage" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="dikirim_dari"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Dikirim Dari</FormLabel>
+                  <FormControl>
+                    <Input placeholder="New Shipping Origin" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="toko"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Toko</FormLabel>
+                  <FormControl>
+                    <Input placeholder="New Store Name" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
