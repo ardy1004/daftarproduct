@@ -382,6 +382,39 @@ export function useItemOptions() {
   });
 }
 
+export function useItemOptionsByCategory(category?: string, subcategory?: string) {
+  return useQuery<string[]>({
+    queryKey: ['itemOptionsByCategory', category, subcategory],
+    queryFn: async () => {
+      let query = supabase
+        .from('products')
+        .select('item')
+        .not('item', 'is', null)
+        .not('item', 'eq', '');
+
+      // Filter by category if provided
+      if (category) {
+        query = query.eq('category', category);
+      }
+
+      // Filter by subcategory if provided
+      if (subcategory) {
+        query = query.eq('subcategory', subcategory);
+      }
+
+      const { data, error } = await query;
+      if (error) throw new Error(error.message);
+
+      // Get unique values and sort them
+      const values = data?.map(item => item.item).filter(Boolean) || [];
+      const uniqueValues = Array.from(new Set(values));
+      return uniqueValues.sort();
+    },
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    enabled: !!(category || subcategory), // Only run if category or subcategory is provided
+  });
+}
+
 export function useTrackProductClick() {
   const queryClient = useQueryClient();
   

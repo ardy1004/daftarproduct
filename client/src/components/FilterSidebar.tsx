@@ -10,7 +10,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { useCategoryContext } from '@/context/CategoryContext';
 import { useSettings } from '@/hooks/useSettings';
-import { usePengirimanOptions, useItemOptions } from '@/hooks/useProductQueries';
+import { usePengirimanOptions, useItemOptions, useItemOptionsByCategory } from '@/hooks/useProductQueries';
 import { formatPrice, slugify } from '@/lib/utils';
 import type { FilterState } from '@/types';
 
@@ -22,12 +22,16 @@ interface FilterSidebarProps {
 }
 
 export function FilterSidebar({ filters, onFiltersChange, showFilters, onToggleFilters }: FilterSidebarProps) {
-  const { hierarchy, isLoading: isHierarchyLoading, categorySlugMap } = useCategoryContext();
+  const { hierarchy, isLoading: isHierarchyLoading, categorySlugMap, subcategorySlugMap } = useCategoryContext();
   const { data: settings, isLoading: isLoadingSettings } = useSettings();
   const { data: pengirimanOptions, isLoading: isLoadingPengiriman } = usePengirimanOptions();
-  const { data: itemOptions, isLoading: isLoadingItem } = useItemOptions();
   const { category: categorySlug, subcategory: subcategorySlug } = useParams<{ category: string; subcategory?: string }>();
   const navigate = useNavigate();
+
+  // Get item options for the currently active subcategory
+  const activeCategoryName = categorySlug ? categorySlugMap.get(categorySlug) : undefined;
+  const activeSubcategoryName = subcategorySlug ? subcategorySlugMap.get(subcategorySlug) : undefined;
+  const { data: activeSubcategoryItems, isLoading: isLoadingActiveSubcategoryItems } = useItemOptionsByCategory(activeCategoryName, activeSubcategoryName);
 
   const [localPriceMin, setLocalPriceMin] = useState(filters.priceMin);
   const [localPriceMax, setLocalPriceMax] = useState(filters.priceMax);
@@ -50,6 +54,23 @@ export function FilterSidebar({ filters, onFiltersChange, showFilters, onToggleF
 
     return () => clearTimeout(timeout);
   }, [localPriceMin, localPriceMax, filters, onFiltersChange]);
+
+  // Update filters when URL params change
+  useEffect(() => {
+    const categoryName = categorySlug ? categorySlugMap.get(categorySlug) : undefined;
+    const subcategoryName = subcategorySlug ? subcategorySlugMap.get(subcategorySlug) : undefined;
+
+    // Only update if the values are different from current filters
+    if (categoryName !== filters.category || subcategoryName !== filters.subcategory) {
+      onFiltersChange({
+        ...filters,
+        category: categoryName,
+        subcategory: subcategoryName,
+        // Reset item filter when category/subcategory changes
+        item: categoryName !== filters.category || subcategoryName !== filters.subcategory ? undefined : filters.item,
+      });
+    }
+  }, [categorySlug, subcategorySlug, categorySlugMap, subcategorySlugMap, filters, onFiltersChange]);
 
   const resetFilters = () => {
     const resetState = {
@@ -107,8 +128,22 @@ export function FilterSidebar({ filters, onFiltersChange, showFilters, onToggleF
 
     const handleCategoryClick = (categoryName: string) => {
       if (categoryName === activeCategoryName) {
+        // Toggle off: reset category and subcategory filters
+        onFiltersChange({
+          ...filters,
+          category: undefined,
+          subcategory: undefined,
+          item: undefined, // Also reset item filter
+        });
         navigate('/'); // Toggle off if clicking the active category
       } else {
+        // Toggle on: set category filter
+        onFiltersChange({
+          ...filters,
+          category: categoryName,
+          subcategory: undefined, // Reset subcategory when changing category
+          item: undefined, // Reset item when changing category
+        });
         navigate(`/${slugify(categoryName)}`);
       }
     };
@@ -144,10 +179,23 @@ export function FilterSidebar({ filters, onFiltersChange, showFilters, onToggleF
                 {isCategoryOpen && subcategories.length > 0 && (() => {
                   const handleSubcategoryClick = (clickedSubcategorySlug: string) => {
                     if (clickedSubcategorySlug === subcategorySlug) {
-                      // Toggle off: navigate to parent category
+                      // Toggle off: navigate to parent category and reset subcategory filter
+                      onFiltersChange({
+                        ...filters,
+                        subcategory: undefined,
+                        item: undefined, // Also reset item filter
+                      });
                       navigate(`/${currentCategorySlug}`);
                     } else {
-                      // Toggle on: navigate to subcategory
+                      // Toggle on: navigate to subcategory and set subcategory filter
+                      const subcategoryName = subcategories.find(sub =>
+                        slugify(sub) === clickedSubcategorySlug
+                      );
+                      onFiltersChange({
+                        ...filters,
+                        subcategory: subcategoryName,
+                        item: undefined, // Reset item when changing subcategory
+                      });
                       navigate(`/${currentCategorySlug}/${clickedSubcategorySlug}`);
                     }
                   };
@@ -158,12 +206,50 @@ export function FilterSidebar({ filters, onFiltersChange, showFilters, onToggleF
                         const currentSubcategorySlug = slugify(subcategoryName);
                         const isSubcategoryActive = subcategorySlug === currentSubcategorySlug;
                         return (
-                          <li key={subcategoryName}>
+                          <li key={subcategoryName} className="space-y-2">
                             <button
                               onClick={() => handleSubcategoryClick(currentSubcategorySlug)}
                               className={`text-sm text-left hover:text-emerald transition-colors ${isSubcategoryActive ? 'text-emerald font-bold' : 'text-muted-foreground'}`}>
                               {subcategoryName}
                             </button>
+                            {isSubcategoryActive && (
+                              <div className="pl-4 pt-2 space-y-1">
+                                {isLoadingActiveSubcategoryItems ? (
+                                  <p className="text-xs text-muted-foreground">Loading items...</p>
+                                ) : activeSubcategoryItems && activeSubcategoryItems.length > 0 ? (
+                                  activeSubcategoryItems.map((item) => {
+                                    const isItemActive = filters.item === item;
+                                    return (
+                                      <button
+                                        key={item}
+                                        onClick={() => {
+                                          if (isItemActive) {
+                                            // Toggle off: reset item filter
+                                            onFiltersChange({
+                                              ...filters,
+                                              item: undefined,
+                                            });
+                                          } else {
+                                            // Toggle on: set item filter
+                                            onFiltersChange({
+                                              ...filters,
+                                              item: item,
+                                            });
+                                          }
+                                        }}
+                                        className={`text-xs text-left hover:text-emerald transition-colors block w-full ${
+                                          isItemActive ? 'text-emerald font-semibold' : 'text-muted-foreground'
+                                        }`}
+                                      >
+                                        {item}
+                                      </button>
+                                    );
+                                  })
+                                ) : (
+                                  <p className="text-xs text-muted-foreground">Tidak ada item tersedia</p>
+                                )}
+                              </div>
+                            )}
                           </li>
                         );
                       })}
@@ -281,33 +367,6 @@ export function FilterSidebar({ filters, onFiltersChange, showFilters, onToggleF
             )}
           </div>
 
-          {/* Item Filter */}
-          <div className="mb-8">
-            <h4 className="font-semibold mb-4 flex items-center">
-              <i className="fas fa-box text-emerald mr-2"></i>
-              Pilih Item
-            </h4>
-            {isLoadingItem ? (
-              <p>Loading item options...</p>
-            ) : (
-              <Select
-                value={filters.item || "all"}
-                onValueChange={handleItemChange}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Semua item" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Semua Item</SelectItem>
-                  {itemOptions?.map((option) => (
-                    <SelectItem key={option} value={option}>
-                      {option}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-          </div>
 
           {/* Sort Options */}
           <div>

@@ -187,12 +187,6 @@ export function ProductCard({ product, onProductClick }: ProductCardProps) {
               <span>{product.toko}</span>
             </div>
           )}
-          {(product as any).item && (
-            <div className="flex items-center text-xs text-muted-foreground">
-              <span className="font-medium text-foreground mr-1">Item:</span>
-              <span>{(product as any).item}</span>
-            </div>
-          )}
         </div>
 
         <div className="flex-grow"></div>
