@@ -17,8 +17,7 @@ export default function Home() {
     priceMin: 0,
     priceMax: 20000000,
     sortBy: 'popular',
-    dikirim_dari: undefined,
-    item: undefined
+    dikirim_dari: undefined
   });
   const [showFilters, setShowFilters] = useState(false);
   const { category: categorySlug, subcategory: subcategorySlug } = useParams<{ category: string; subcategory?: string }>();
@@ -72,7 +71,6 @@ export default function Home() {
       category: undefined,
       subcategory: undefined,
       dikirim_dari: undefined,
-      item: undefined,
     });
   };
 

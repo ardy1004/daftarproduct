@@ -47,8 +47,7 @@ export interface FilterState {
   subcategory?: string;
   categories?: string[];
   dikirim_dari?: string;
-  item?: string;
 }
 
-export type CategoryHierarchy = Map<string, Map<string, Set<string>>>;
+export type CategoryHierarchy = Map<string, Set<string>>;
 
