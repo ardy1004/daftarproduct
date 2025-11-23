@@ -7,6 +7,7 @@ interface CategoryContextType {
   hierarchy: CategoryHierarchy;
   categorySlugMap: Map<string, string>;
   subcategorySlugMap: Map<string, string>;
+  itemSlugMap: Map<string, string>;
   isLoading: boolean;
 }
 
@@ -27,9 +28,22 @@ export function CategoryProvider({ children }: { children: React.ReactNode }) {
   const subcategorySlugMap = useMemo(() => {
     const map = new Map<string, string>();
     if (!hierarchy) return map;
-    for (const subcategories of hierarchy.values()) {
-      for (const subcategoryName of subcategories) {
+    for (const categoryMap of hierarchy.values()) {
+      for (const subcategoryName of categoryMap.keys()) {
         map.set(slugify(subcategoryName), subcategoryName);
+      }
+    }
+    return map;
+  }, [hierarchy]);
+
+  const itemSlugMap = useMemo(() => {
+    const map = new Map<string, string>();
+    if (!hierarchy) return map;
+    for (const categoryMap of hierarchy.values()) {
+      for (const subcategoryMap of categoryMap.values()) {
+        for (const itemName of subcategoryMap) {
+          map.set(slugify(itemName), itemName);
+        }
       }
     }
     return map;
@@ -39,6 +53,7 @@ export function CategoryProvider({ children }: { children: React.ReactNode }) {
     hierarchy: hierarchy || new Map(),
     categorySlugMap,
     subcategorySlugMap,
+    itemSlugMap,
     isLoading,
   };
 

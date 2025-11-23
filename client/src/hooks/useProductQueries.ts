@@ -119,6 +119,13 @@ export function useProducts(filters?: FilterState) {
         );
       }
 
+      // Apply item filter
+      if (filters?.item) {
+        processedData = processedData.filter(product =>
+          (product as any).item === filters.item
+        );
+      }
+
       // Apply sorting
       if (filters?.sortBy === 'popular') {
         processedData.sort((a, b) => (b.clicks || 0) - (a.clicks || 0));
@@ -200,6 +207,9 @@ export function useInfiniteProducts(filters?: FilterState) {
       }
       if (filters?.dikirim_dari) {
         query = query.eq('dikirim_dari', filters.dikirim_dari);
+      }
+      if (filters?.item) {
+        query = query.eq('item', filters.item);
       }
 
       // Apply sorting
@@ -293,18 +303,27 @@ export function useCategories() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('products')
-        .select('category, subcategory');
+        .select('category, subcategory, item');
       if (error) throw new Error(error.message);
 
-      const hierarchy = new Map<string, Set<string>>();
+      const hierarchy = new Map<string, Map<string, Set<string>>>();
 
       (data || []).forEach(item => {
         if (item.category) {
           if (!hierarchy.has(item.category)) {
-            hierarchy.set(item.category, new Set<string>());
+            hierarchy.set(item.category, new Map<string, Set<string>>());
           }
+
+          const categoryMap = hierarchy.get(item.category)!;
+
           if (item.subcategory) {
-            hierarchy.get(item.category)!.add(item.subcategory);
+            if (!categoryMap.has(item.subcategory)) {
+              categoryMap.set(item.subcategory, new Set<string>());
+            }
+
+            if (item.item) {
+              categoryMap.get(item.subcategory)!.add(item.item);
+            }
           }
         }
       });

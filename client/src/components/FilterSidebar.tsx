@@ -22,7 +22,7 @@ interface FilterSidebarProps {
 }
 
 export function FilterSidebar({ filters, onFiltersChange, showFilters, onToggleFilters }: FilterSidebarProps) {
-  const { hierarchy, isLoading: isHierarchyLoading, categorySlugMap } = useCategoryContext();
+  const { hierarchy, isLoading: isHierarchyLoading, categorySlugMap, subcategorySlugMap, itemSlugMap } = useCategoryContext();
   const { data: settings, isLoading: isLoadingSettings } = useSettings();
   const { data: pengirimanOptions, isLoading: isLoadingPengiriman } = usePengirimanOptions();
   const { category: categorySlug, subcategory: subcategorySlug } = useParams<{ category: string; subcategory?: string }>();
@@ -59,6 +59,7 @@ export function FilterSidebar({ filters, onFiltersChange, showFilters, onToggleF
       category: undefined,
       subcategory: undefined,
       dikirim_dari: undefined,
+      item: undefined,
     };
     setLocalPriceMin(0);
     setLocalPriceMax(20000000);
@@ -95,12 +96,26 @@ export function FilterSidebar({ filters, onFiltersChange, showFilters, onToggleF
     }
 
     const activeCategoryName = categorySlug ? categorySlugMap.get(categorySlug) : undefined;
+    const activeSubcategoryName = subcategorySlug ? subcategorySlugMap.get(subcategorySlug) : undefined;
 
     const handleCategoryClick = (categoryName: string) => {
       if (categoryName === activeCategoryName) {
         navigate('/'); // Toggle off if clicking the active category
       } else {
         navigate(`/${slugify(categoryName)}`);
+      }
+    };
+
+    const handleSubcategoryClick = (categoryName: string, subcategoryName: string) => {
+      const categorySlug = slugify(categoryName);
+      const subcategorySlug = slugify(subcategoryName);
+
+      if (subcategoryName === activeSubcategoryName && categoryName === activeCategoryName) {
+        // Toggle off: navigate to parent category
+        navigate(`/${categorySlug}`);
+      } else {
+        // Toggle on: navigate to subcategory
+        navigate(`/${categorySlug}/${subcategorySlug}`);
       }
     };
 
@@ -111,54 +126,63 @@ export function FilterSidebar({ filters, onFiltersChange, showFilters, onToggleF
           Kategori
         </h4>
         <div className="space-y-3">
-          {Array.from(hierarchy.keys()).sort().map(categoryName => {
-            const subcategories = Array.from(hierarchy.get(categoryName) || []).sort();
+          {Array.from(hierarchy.entries()).sort(([a], [b]) => a.localeCompare(b)).map(([categoryName, subcategoryMap]) => {
             const currentCategorySlug = slugify(categoryName);
             const isCategoryOpen = activeCategoryName === categoryName;
 
             return (
               <div key={categoryName}>
                 <div className="flex items-center space-x-3">
-                  <Checkbox 
-                    id={categoryName} 
+                  <Checkbox
+                    id={categoryName}
                     checked={isCategoryOpen}
                     onCheckedChange={() => handleCategoryClick(categoryName)}
                     className="rounded-full data-[state=checked]:bg-emerald data-[state=checked]:text-white"
                   />
-                  <Label 
-                    htmlFor={categoryName} 
+                  <Label
+                    htmlFor={categoryName}
                     className="cursor-pointer hover:text-emerald transition-colors w-full"
                   >
                     {categoryName}
                   </Label>
                 </div>
-                {isCategoryOpen && subcategories.length > 0 && (() => {
-                  const handleSubcategoryClick = (clickedSubcategorySlug: string) => {
-                    if (clickedSubcategorySlug === subcategorySlug) {
-                      // Toggle off: navigate to parent category
-                      navigate(`/${currentCategorySlug}`);
-                    } else {
-                      // Toggle on: navigate to subcategory
-                      navigate(`/${currentCategorySlug}/${clickedSubcategorySlug}`);
-                    }
-                  };
-
+                {isCategoryOpen && subcategoryMap.size > 0 && (() => {
                   return (
-                    <ul className="space-y-2 pl-8 pt-2">
-                      {subcategories.map(subcategoryName => {
+                    <div className="pl-8 pt-2 space-y-2">
+                      {Array.from(subcategoryMap.entries()).sort(([a], [b]) => a.localeCompare(b)).map(([subcategoryName, items]) => {
                         const currentSubcategorySlug = slugify(subcategoryName);
-                        const isSubcategoryActive = subcategorySlug === currentSubcategorySlug;
+                        const isSubcategoryActive = subcategorySlug === currentSubcategorySlug && activeCategoryName === categoryName;
+
                         return (
-                          <li key={subcategoryName}>
+                          <div key={subcategoryName}>
                             <button
-                              onClick={() => handleSubcategoryClick(currentSubcategorySlug)}
-                              className={`text-sm text-left hover:text-emerald transition-colors ${isSubcategoryActive ? 'text-emerald font-bold' : 'text-muted-foreground'}`}>
-                              {subcategoryName}
+                              onClick={() => handleSubcategoryClick(categoryName, subcategoryName)}
+                              className={`text-sm text-left hover:text-emerald transition-colors block ${isSubcategoryActive ? 'text-emerald font-bold' : 'text-muted-foreground'}`}>
+                              - {subcategoryName}
                             </button>
-                          </li>
+                            {isSubcategoryActive && items.size > 0 && (
+                              <ul className="pl-6 pt-1 space-y-1">
+                                {Array.from(items).sort().map(itemName => {
+                                  const currentItemSlug = slugify(itemName);
+                                  return (
+                                    <li key={itemName}>
+                                      <button
+                                        onClick={() => {
+                                          // For now, just show the item - could be extended to filter by item
+                                          console.log('Clicked item:', itemName);
+                                        }}
+                                        className="text-xs text-muted-foreground hover:text-emerald transition-colors cursor-pointer text-left">
+                                        - {itemName}
+                                      </button>
+                                    </li>
+                                  );
+                                })}
+                              </ul>
+                            )}
+                          </div>
                         );
                       })}
-                    </ul>
+                    </div>
                   );
                 })()}
               </div>
