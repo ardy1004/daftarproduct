@@ -48,6 +48,8 @@ const productFormSchema = z.object({
   commission: z.coerce.number().min(0).optional(),
   dikirim_dari: z.string().optional(),
   toko: z.string().optional(),
+  item: z.string().optional(),
+  video_url: z.string().optional(),
   affiliate_url: z.string().url(),
   image_url: z.string().url(),
   is_featured: z.boolean().default(false),
@@ -208,12 +210,14 @@ export function ProductManagementTab() {
       subcategory: dataFromDialog.subcategory,
       price: dataFromDialog.price,
       sales: dataFromDialog.sales,
-      commission: dataFromDialog.commission,
+      item: (dataFromDialog as any).item || '', // Include item field
+      commission: dataFromDialog.commission, // Use 'commission' for database compatibility
       dikirim_dari: dataFromDialog.dikirim_dari,
       toko: dataFromDialog.toko,
       affiliate_url: dataFromDialog.affiliateUrl,
       image_url: dataFromDialog.imageUrl,
-      is_featured: dataFromDialog.isFeatured,
+      video_url: (dataFromDialog as any).video_url || '', // Include video_url field
+      // Note: is_featured not in current database schema
     };
 
     // The dialog already filters out empty/null values, but this also removes any keys
@@ -380,8 +384,10 @@ export function ProductManagementTab() {
       { label: "sales", key: "sales" },
       { label: "category", key: "category" },
       { label: "subcategory", key: "subcategory" },
+      { label: "item", key: "item" },
       { label: "affiliate_url", key: "affiliate_url" },
       { label: "image_url", key: "image_url" },
+      { label: "video_url", key: "video_url" },
       { label: "original_price", key: "original_price" },
       { label: "dikirim_dari", key: "dikirim_dari" },
       { label: "toko", key: "toko" },
@@ -393,6 +399,7 @@ export function ProductManagementTab() {
     ];
 
     // Create a copy of all products data to export everything
+    // Map database fields to CSV headers, using 'komisi' for commission
     const exportData = allProducts.map(product => ({
       product_id: product.product_id,
       product_name: product.product_name,
@@ -401,15 +408,14 @@ export function ProductManagementTab() {
       original_price: product.original_price,
       price: product.price,
       sales: product.sales,
-      commission: product.commission,
+      item: (product as any).item || '', // Include item field
+      komisi: product.commission, // Use 'komisi' for CSV export to match database
       dikirim_dari: product.dikirim_dari,
       toko: product.toko,
       affiliate_url: product.affiliate_url,
       image_url: product.image_url,
-      is_featured: product.is_featured,
-      featured_order: product.featured_order,
-      rating: product.rating,
-      stock_available: product.stock_available,
+      video_url: (product as any).video_url || '', // Include video_url field
+      // Note: is_featured, featured_order, rating, stock_available not in current database
     }));
 
     setCsvExportData(exportData);
@@ -440,22 +446,27 @@ export function ProductManagementTab() {
         let failedImports = 0;
 
         const importPromises = parsedData.map(async (item, index) => {
-          console.log(`[DEBUG] Row ${index + 2} - Original CSV data:`, item);
+           console.log(`[DEBUG] Row ${index + 2} - Processing product: ${item.product_name?.substring(0, 50)}...`);
 
           // Map CSV column names to database field names
           const mappedItem = {
             ...item,
-            // Map "komisi" from CSV to "commission" for database (provide default if missing)
+            // Map "komisi" from CSV/database to "commission" for schema compatibility
             commission: item.komisi ? parseFloat(item.komisi) : (item.commission ? parseFloat(item.commission) : 0),
             // Ensure other fields are properly mapped (provide defaults if missing)
             dikirim_dari: item.dikirim_dari || '',
             toko: item.toko || '',
+            item: item.item || item.Item || '', // Map item field (try both cases)
+            video_url: item.video_url || item.videoUrl || item.Video_Url || '', // Map video_url field (try multiple variations)
             // Ensure numeric fields are parsed as numbers
             price: item.price ? parseFloat(item.price) : 0,
             original_price: item.original_price ? parseFloat(item.original_price) : undefined,
             sales: item.sales ? parseInt(item.sales) : 0,
             rating: item.rating ? parseFloat(item.rating) : undefined,
             featured_order: item.featured_order ? parseInt(item.featured_order) : undefined,
+            // Handle missing columns with defaults
+            is_featured: item.is_featured !== undefined ? item.is_featured : false,
+            stock_available: item.stock_available !== undefined ? item.stock_available : true,
           };
 
           // Remove the original "komisi" key if it exists to avoid conflicts
@@ -470,47 +481,58 @@ export function ProductManagementTab() {
             }
           });
 
-          console.log(`[DEBUG] Row ${index + 2} - Mapped data:`, mappedItem);
+          // console.log(`[DEBUG] Row ${index + 2} - Mapped data:`, mappedItem);
 
           // Use schema to validate and parse each row
           const validationResult = productFormSchema.safeParse(mappedItem);
 
-          console.log(`[DEBUG] Row ${index + 2} - Validation result:`, validationResult.success ? 'SUCCESS' : 'FAILED');
+          console.log(`[DEBUG] Row ${index + 2} - Validation:`, validationResult.success ? 'SUCCESS' : 'FAILED');
           if (!validationResult.success) {
             console.log(`[DEBUG] Row ${index + 2} - Validation errors:`, validationResult.error.errors);
-          } else {
-            console.log(`[DEBUG] Row ${index + 2} - Validated data:`, validationResult.data);
           }
 
           if (validationResult.success) {
             // Ensure required fields are present and clean undefined values
+            // Only include fields that exist in the actual database schema
             const data = validationResult.data;
-            const cleanData: z.infer<typeof productFormSchema> = {
+            const cleanData = {
               product_name: data.product_name,
               category: data.category,
               price: data.price,
               affiliate_url: data.affiliate_url,
               image_url: data.image_url,
+              // Map commission to commission for database compatibility
+              commission: data.commission || 0,
+              dikirim_dari: data.dikirim_dari || '',
+              toko: data.toko || '',
+              item: data.item || '', // Include item field
+              video_url: data.video_url || '', // Include video_url field
               is_featured: data.is_featured ?? false,
               stock_available: data.stock_available ?? true,
               ...(data.product_id && { product_id: data.product_id }),
               ...(data.subcategory && { subcategory: data.subcategory }),
               ...(data.original_price !== undefined && { original_price: data.original_price }),
               ...(data.sales !== undefined && { sales: data.sales }),
-              ...(data.commission !== undefined && { commission: data.commission }),
-              ...(data.dikirim_dari && { dikirim_dari: data.dikirim_dari }),
-              ...(data.toko && { toko: data.toko }),
               ...(data.featured_order !== undefined && { featured_order: data.featured_order }),
               ...(data.rating !== undefined && { rating: data.rating }),
             };
 
-            console.log(`[DEBUG] Row ${index + 2} - Clean data for Supabase:`, cleanData);
+            // Debug log untuk memverifikasi data yang dikirim
+            if (index < 2) { // Log hanya untuk 2 produk pertama
+              console.log(`[DEBUG] Row ${index + 2} - Clean data for Supabase:`, {
+                commission: cleanData.commission,
+                commission_type: typeof cleanData.commission,
+                item: cleanData.item,
+                video_url: cleanData.video_url?.substring(0, 50),
+                product_name: cleanData.product_name?.substring(0, 30)
+              });
+            }
 
             successfulImports++;
             try {
               const result = await addProduct.mutateAsync(cleanData);
-              console.log(`[DEBUG] Row ${index + 2} - Insert successful:`, result);
-              return result;
+              console.log(`[DEBUG] Row ${index + 2} - Insert result:`, result);
+              return { success: true };
             } catch (insertError: any) {
               console.error(`[DEBUG] Row ${index + 2} - Insert failed:`, {
                 error: insertError,

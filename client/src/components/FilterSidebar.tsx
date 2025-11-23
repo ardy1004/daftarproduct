@@ -10,6 +10,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { useCategoryContext } from '@/context/CategoryContext';
 import { useSettings } from '@/hooks/useSettings';
+import { usePengirimanOptions } from '@/hooks/useProductQueries';
 import { formatPrice, slugify } from '@/lib/utils';
 import type { FilterState } from '@/types';
 
@@ -23,6 +24,7 @@ interface FilterSidebarProps {
 export function FilterSidebar({ filters, onFiltersChange, showFilters, onToggleFilters }: FilterSidebarProps) {
   const { hierarchy, isLoading: isHierarchyLoading, categorySlugMap } = useCategoryContext();
   const { data: settings, isLoading: isLoadingSettings } = useSettings();
+  const { data: pengirimanOptions, isLoading: isLoadingPengiriman } = usePengirimanOptions();
   const { category: categorySlug, subcategory: subcategorySlug } = useParams<{ category: string; subcategory?: string }>();
   const navigate = useNavigate();
 
@@ -56,6 +58,7 @@ export function FilterSidebar({ filters, onFiltersChange, showFilters, onToggleF
       sortBy: 'popular',
       category: undefined,
       subcategory: undefined,
+      dikirim_dari: undefined,
     };
     setLocalPriceMin(0);
     setLocalPriceMax(20000000);
@@ -72,6 +75,13 @@ export function FilterSidebar({ filters, onFiltersChange, showFilters, onToggleF
     onFiltersChange({
       ...filters,
       sortBy
+    });
+  };
+
+  const handlePengirimanChange = (dikirim_dari: string) => {
+    onFiltersChange({
+      ...filters,
+      dikirim_dari: dikirim_dari === "all" ? undefined : dikirim_dari
     });
   };
 
@@ -233,7 +243,35 @@ export function FilterSidebar({ filters, onFiltersChange, showFilters, onToggleF
           
           {/* Category Filter */}
           {renderCategoryFilter()}
-          
+
+          {/* Pengiriman Filter */}
+          <div className="mb-8">
+            <h4 className="font-semibold mb-4 flex items-center">
+              <i className="fas fa-truck text-emerald mr-2"></i>
+              Pilih Pengiriman
+            </h4>
+            {isLoadingPengiriman ? (
+              <p>Loading pengiriman options...</p>
+            ) : (
+              <Select
+                value={filters.dikirim_dari || "all"}
+                onValueChange={handlePengirimanChange}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Semua pengiriman" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Semua Pengiriman</SelectItem>
+                  {pengirimanOptions?.map((option) => (
+                    <SelectItem key={option} value={option}>
+                      {option}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
+
           {/* Sort Options */}
           <div>
             <h4 className="font-semibold mb-4 flex items-center">

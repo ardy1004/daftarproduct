@@ -82,7 +82,7 @@ export function FeaturedManagementTab() {
       });
 
       Promise.all(updatePromises).then(() => {
-        queryClient.invalidateQueries({ queryKey: ['featured-products'] });
+        queryClient.invalidateQueries({ queryKey: ['featuredProducts'] });
       });
 
       toast({ title: "Success", description: "Product order updated." });

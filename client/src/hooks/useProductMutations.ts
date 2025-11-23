@@ -14,6 +14,8 @@ export const productFormSchema = z.object({
   commission: z.coerce.number().min(0).optional(),
   dikirim_dari: z.string().optional(),
   toko: z.string().optional(),
+  item: z.string().optional(),
+  video_url: z.string().optional(),
   affiliate_url: z.string().url(),
   image_url: z.string().url(),
   is_featured: z.boolean().default(false),
@@ -34,23 +36,28 @@ export function useAddProduct() {
         original_price: newProduct.original_price,
         price: newProduct.price,
         sales: newProduct.sales,
-        commission: newProduct.commission,
+        item: newProduct.item || '', // Include item field
+        commission: newProduct.commission, // Use 'commission' for database compatibility
         dikirim_dari: newProduct.dikirim_dari,
         toko: newProduct.toko,
         affiliate_url: newProduct.affiliate_url,
         image_url: newProduct.image_url,
-        is_featured: newProduct.is_featured,
-        featured_order: newProduct.featured_order,
-        rating: newProduct.rating,
-        stock_available: newProduct.stock_available,
-      }]).select();
+        video_url: newProduct.video_url || '', // Include video_url field
+        rating: newProduct.rating, // Include rating field
+        is_featured: newProduct.is_featured, // Include is_featured field
+        featured_order: newProduct.featured_order, // Include featured_order field
+        // Note: stock_available not in current database
+      }]);
 
       if (error) throw new Error(error.message);
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['products'] });
-      queryClient.invalidateQueries({ queryKey: ['featuredProducts'] });
+      console.log('Invalidating product queries after insert...');
+      queryClient.invalidateQueries({ queryKey: ['products'], exact: false });
+      queryClient.invalidateQueries({ queryKey: ['products-infinite'], exact: false });
+      queryClient.invalidateQueries({ queryKey: ['featuredProducts'], exact: false });
+      queryClient.invalidateQueries({ queryKey: ['nonFeaturedProducts'] });
     },
   });
 }
@@ -69,25 +76,28 @@ export function useUpdateProduct() {
           original_price: updateData.original_price,
           price: updateData.price,
           sales: updateData.sales,
-          commission: updateData.commission,
+          item: updateData.item || '', // Include item field
+          commission: updateData.commission, // Use 'commission' for database compatibility
           dikirim_dari: updateData.dikirim_dari,
           toko: updateData.toko,
           affiliate_url: updateData.affiliate_url,
           image_url: updateData.image_url,
-          is_featured: updateData.is_featured,
-          featured_order: updateData.featured_order,
-          rating: updateData.rating,
-          stock_available: updateData.stock_available,
+          video_url: updateData.video_url || '', // Include video_url field
+          rating: updateData.rating, // Include rating field
+          is_featured: updateData.is_featured, // Include is_featured field
+          featured_order: updateData.featured_order, // Include featured_order field
+          // Note: stock_available not in current database
         })
-        .eq('id', id)
-        .select();
+        .eq('id', id);
 
       if (error) throw new Error(error.message);
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['products'] });
-      queryClient.invalidateQueries({ queryKey: ['featuredProducts'] });
+      queryClient.invalidateQueries({ queryKey: ['products'], exact: false });
+      queryClient.invalidateQueries({ queryKey: ['products-infinite'], exact: false });
+      queryClient.invalidateQueries({ queryKey: ['featuredProducts'], exact: false });
+      queryClient.invalidateQueries({ queryKey: ['nonFeaturedProducts'] });
     },
   });
 }
@@ -100,7 +110,8 @@ export function useDeleteProduct() {
       if (error) throw new Error(error.message);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['products'], exact: false });
+      queryClient.invalidateQueries({ queryKey: ['products-infinite'], exact: false });
       queryClient.invalidateQueries({ queryKey: ['featuredProducts'] });
     },
   });

@@ -55,7 +55,7 @@ export function ProductDataTable({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead padding="checkbox">
+            <TableHead>
               <Checkbox
                 checked={selectedProductIds.length === products.length && products.length > 0}
                 onCheckedChange={handleSelectAll}
@@ -67,6 +67,8 @@ export function ProductDataTable({
             <TableHead>Category</TableHead>
             <TableHead>Rating</TableHead>
             <TableHead>Komisi</TableHead>
+            <TableHead>Item</TableHead>
+            <TableHead>Video URL</TableHead>
             <TableHead>Dikirim Dari</TableHead>
             <TableHead>Toko</TableHead>
             <TableHead className="hidden md:table-cell">Price</TableHead>
@@ -79,7 +81,7 @@ export function ProductDataTable({
           {products?.length ? (
             products.map((product) => (
               <TableRow key={product.id} data-state={selectedProductIds.includes(product.id) && "selected"}>
-                <TableCell padding="checkbox">
+                <TableCell>
                   <Checkbox
                     checked={selectedProductIds.includes(product.id)}
                     onCheckedChange={(checked) => handleRowSelect(product.id, !!checked)}
@@ -91,6 +93,8 @@ export function ProductDataTable({
                 <TableCell>{product.category}</TableCell>
                 <TableCell>{product.rating || 'N/A'}</TableCell>
                 <TableCell>{product.commission ? formatPrice(product.commission) : 'N/A'}</TableCell>
+                <TableCell className="max-w-xs truncate">{(product as any).item || 'N/A'}</TableCell>
+                <TableCell className="max-w-xs truncate">{(product as any).video_url ? '✓' : 'N/A'}</TableCell>
                 <TableCell>{product.dikirim_dari || 'N/A'}</TableCell>
                 <TableCell>{product.toko || 'N/A'}</TableCell>
                 <TableCell className="hidden md:table-cell">{formatPrice(product.price)}</TableCell>
@@ -124,7 +128,7 @@ export function ProductDataTable({
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={10} className="h-24 text-center">
+              <TableCell colSpan={12} className="h-24 text-center">
                 No results.
               </TableCell>
             </TableRow>

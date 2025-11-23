@@ -14,9 +14,9 @@ function shuffleArray<T>(array: T[]): T[] {
 
 export function useProducts(filters?: FilterState) {
   return useQuery<Product[]>({
-    queryKey: ['products-admin', filters], // Changed query key to avoid cache conflicts
+    queryKey: ['products', filters], // Consistent with mutation invalidation
     queryFn: async () => {
-      console.log('Fetching all products for admin dashboard...');
+      console.log('🔄 Fetching all products for admin dashboard...');
 
       // Supabase has a default limit of 1000 rows. We need to fetch in batches.
       const BATCH_SIZE = 1000;
@@ -40,6 +40,9 @@ export function useProducts(filters?: FilterState) {
 
         const batchData = data || [];
         console.log(`Batch ${Math.floor(offset / BATCH_SIZE) + 1}: fetched ${batchData.length} products`);
+        if (batchData.length > 0) {
+          console.log('Sample product from batch:', batchData[0]);
+        }
 
         allProducts = [...allProducts, ...batchData];
 
@@ -57,7 +60,24 @@ export function useProducts(filters?: FilterState) {
         }
       }
 
-      console.log('Total products fetched across all batches:', allProducts.length);
+      console.log('📊 Total products fetched across all batches:', allProducts.length);
+
+      // Transform database fields to match schema expectations
+      // Map 'komisi' to 'commission' for frontend compatibility
+      allProducts = allProducts.map(product => {
+        return {
+          ...product,
+          commission: product.komisi || product.commission || 0,
+          // Ensure other fields have defaults if missing
+          is_featured: product.is_featured ?? false,
+          stock_available: product.stock_available ?? true,
+          rating: product.rating ?? 0,
+          featured_order: product.featured_order ?? null,
+          // Include additional fields from database
+          item: (product as any).item || '',
+          video_url: (product as any).video_url || '',
+        };
+      });
 
       // Apply client-side filtering and sorting
       let processedData = allProducts;
@@ -83,12 +103,19 @@ export function useProducts(filters?: FilterState) {
       // Apply price filters
       if (filters?.priceMin !== undefined) {
         processedData = processedData.filter(product =>
-          parseFloat(product.price) >= filters.priceMin!
+          Number(product.price) >= filters.priceMin!
         );
       }
       if (filters?.priceMax !== undefined) {
         processedData = processedData.filter(product =>
-          parseFloat(product.price) <= filters.priceMax!
+          Number(product.price) <= filters.priceMax!
+        );
+      }
+
+      // Apply dikirim_dari filter
+      if (filters?.dikirim_dari) {
+        processedData = processedData.filter(product =>
+          product.dikirim_dari === filters.dikirim_dari
         );
       }
 
@@ -98,9 +125,9 @@ export function useProducts(filters?: FilterState) {
       } else if (filters?.sortBy === 'terlaris') {
         processedData.sort((a, b) => (b.sales || 0) - (a.sales || 0));
       } else if (filters?.sortBy === 'harga_termurah') {
-        processedData.sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
+        processedData.sort((a, b) => Number(a.price) - Number(b.price));
       } else if (filters?.sortBy === 'harga_tertinggi') {
-        processedData.sort((a, b) => parseFloat(b.price) - parseFloat(a.price));
+        processedData.sort((a, b) => Number(b.price) - Number(a.price));
       } else if (filters?.sortBy === 'rekomendasi') {
         // Shuffle for rekomendasi
         for (let i = processedData.length - 1; i > 0; i--) {
@@ -110,11 +137,19 @@ export function useProducts(filters?: FilterState) {
       }
       // Default sort is already applied (created_at desc)
 
-      console.log('Final processed data:', processedData.length, 'products');
+      console.log('✅ Final processed data:', processedData.length, 'products');
+      if (processedData.length > 0) {
+        console.log('Sample final product:', {
+          id: processedData[0].id,
+          komisi: processedData[0].commission,
+          item: (processedData[0] as any).item,
+          video_url: (processedData[0] as any).video_url
+        });
+      }
       return processedData;
     },
-    staleTime: 30 * 1000, // 30 seconds for featured products
-    gcTime: 2 * 60 * 1000, // 2 minutes cache time
+    staleTime: 0, // Always fetch fresh data
+    gcTime: 0, // Don't cache
   });
 }
 
@@ -122,14 +157,14 @@ const PRODUCTS_PER_PAGE = 20;
 
 export function useInfiniteProducts(filters?: FilterState) {
   return useInfiniteQuery<Product[]>({
-    queryKey: ['products-infinite', filters], // Changed key to avoid conflicts
+    queryKey: ['products-infinite', filters], // Keep separate for infinite scroll
     queryFn: async ({ pageParam = 0 }) => {
       console.log('Fetching infinite products batch:', pageParam);
 
       // For infinite scroll, we still use pagination but with larger batches
       // to ensure all products can be loaded eventually
       const BATCH_SIZE = 20; // Smaller batches for infinite scroll
-      const from = pageParam * BATCH_SIZE;
+      const from = (pageParam as number) * BATCH_SIZE;
       const to = from + BATCH_SIZE - 1;
 
       let query = supabase.from('products').select('*');
@@ -162,6 +197,9 @@ export function useInfiniteProducts(filters?: FilterState) {
       }
       if (filters?.priceMax !== undefined) {
         query = query.lte('price', filters.priceMax);
+      }
+      if (filters?.dikirim_dari) {
+        query = query.eq('dikirim_dari', filters.dikirim_dari);
       }
 
       // Apply sorting
@@ -291,6 +329,26 @@ export function useNonFeaturedProducts() {
     },
     staleTime: 0, // Don't cache this query
     gcTime: 0, // Don't cache this query (React Query v5)
+  });
+}
+
+export function usePengirimanOptions() {
+  return useQuery<string[]>({
+    queryKey: ['pengirimanOptions'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('products')
+        .select('dikirim_dari')
+        .not('dikirim_dari', 'is', null)
+        .not('dikirim_dari', 'eq', '');
+      if (error) throw new Error(error.message);
+
+      // Get unique values and sort them
+      const values = data?.map(item => item.dikirim_dari).filter(Boolean) || [];
+      const uniqueValues = Array.from(new Set(values));
+      return uniqueValues.sort();
+    },
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 }
 

@@ -7,16 +7,20 @@ export interface Product {
   sales: number | null;
   category: string;
   subcategory: string | null;
+  item?: string | null; // Additional field from database
   affiliate_url: string | null;
   image_url: string | null;
+  video_url?: string | null; // Additional field from database
   rating: number | null;
   commission: string | number | null;
+  komisi?: string | number | null; // Database field name
   dikirim_dari: string | null;
   toko: string | null;
   is_featured: boolean | null;
   featured_order: number | null;
   created_at: string | null;
   stock_available: boolean | null;
+  clicks?: number; // For analytics
 }
 
 export interface ProductAnalytics {
@@ -41,6 +45,8 @@ export interface FilterState {
   sortBy: string;
   category?: string;
   subcategory?: string;
+  categories?: string[];
+  dikirim_dari?: string;
 }
 
 export type CategoryHierarchy = Map<string, Set<string>>;

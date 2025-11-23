@@ -18,6 +18,8 @@ export const products = pgTable("products", {
   commission: numeric("commission").default("0"),
   dikirim_dari: text("dikirim_dari"),
   toko: text("toko"),
+  item: text("item"),
+  video_url: text("video_url"),
   isFeatured: boolean("is_featured").default(false),
   featuredOrder: integer("featured_order"),
   stockAvailable: boolean("stock_available").default(true),
