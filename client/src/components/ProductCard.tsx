@@ -173,7 +173,7 @@ export function ProductCard({ product, onProductClick }: ProductCardProps) {
           </div>
         )}
 
-        {/* Informasi Dikirim Dari dan Toko */}
+        {/* Informasi Dikirim Dari, Toko, dan Item */}
         <div className="flex flex-col space-y-1 mb-2">
           {product.dikirim_dari && (
             <div className="flex items-center text-xs text-muted-foreground">
@@ -185,6 +185,12 @@ export function ProductCard({ product, onProductClick }: ProductCardProps) {
             <div className="flex items-center text-xs text-muted-foreground">
               <span className="font-medium text-foreground mr-1">Toko:</span>
               <span>{product.toko}</span>
+            </div>
+          )}
+          {(product as any).item && (
+            <div className="flex items-center text-xs text-muted-foreground">
+              <span className="font-medium text-foreground mr-1">Item:</span>
+              <span>{(product as any).item}</span>
             </div>
           )}
         </div>

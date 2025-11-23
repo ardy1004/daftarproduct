@@ -10,7 +10,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { useCategoryContext } from '@/context/CategoryContext';
 import { useSettings } from '@/hooks/useSettings';
-import { usePengirimanOptions } from '@/hooks/useProductQueries';
+import { usePengirimanOptions, useItemOptions } from '@/hooks/useProductQueries';
 import { formatPrice, slugify } from '@/lib/utils';
 import type { FilterState } from '@/types';
 
@@ -25,6 +25,7 @@ export function FilterSidebar({ filters, onFiltersChange, showFilters, onToggleF
   const { hierarchy, isLoading: isHierarchyLoading, categorySlugMap } = useCategoryContext();
   const { data: settings, isLoading: isLoadingSettings } = useSettings();
   const { data: pengirimanOptions, isLoading: isLoadingPengiriman } = usePengirimanOptions();
+  const { data: itemOptions, isLoading: isLoadingItem } = useItemOptions();
   const { category: categorySlug, subcategory: subcategorySlug } = useParams<{ category: string; subcategory?: string }>();
   const navigate = useNavigate();
 
@@ -59,6 +60,7 @@ export function FilterSidebar({ filters, onFiltersChange, showFilters, onToggleF
       category: undefined,
       subcategory: undefined,
       dikirim_dari: undefined,
+      item: undefined,
     };
     setLocalPriceMin(0);
     setLocalPriceMax(20000000);
@@ -82,6 +84,13 @@ export function FilterSidebar({ filters, onFiltersChange, showFilters, onToggleF
     onFiltersChange({
       ...filters,
       dikirim_dari: dikirim_dari === "all" ? undefined : dikirim_dari
+    });
+  };
+
+  const handleItemChange = (item: string) => {
+    onFiltersChange({
+      ...filters,
+      item: item === "all" ? undefined : item
     });
   };
 
@@ -263,6 +272,34 @@ export function FilterSidebar({ filters, onFiltersChange, showFilters, onToggleF
                 <SelectContent>
                   <SelectItem value="all">Semua Pengiriman</SelectItem>
                   {pengirimanOptions?.map((option) => (
+                    <SelectItem key={option} value={option}>
+                      {option}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
+
+          {/* Item Filter */}
+          <div className="mb-8">
+            <h4 className="font-semibold mb-4 flex items-center">
+              <i className="fas fa-box text-emerald mr-2"></i>
+              Pilih Item
+            </h4>
+            {isLoadingItem ? (
+              <p>Loading item options...</p>
+            ) : (
+              <Select
+                value={filters.item || "all"}
+                onValueChange={handleItemChange}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Semua item" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Semua Item</SelectItem>
+                  {itemOptions?.map((option) => (
                     <SelectItem key={option} value={option}>
                       {option}
                     </SelectItem>

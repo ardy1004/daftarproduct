@@ -119,6 +119,13 @@ export function useProducts(filters?: FilterState) {
         );
       }
 
+      // Apply item filter
+      if (filters?.item) {
+        processedData = processedData.filter(product =>
+          (product as any).item === filters.item
+        );
+      }
+
       // Apply sorting
       if (filters?.sortBy === 'popular') {
         processedData.sort((a, b) => (b.clicks || 0) - (a.clicks || 0));
@@ -200,6 +207,9 @@ export function useInfiniteProducts(filters?: FilterState) {
       }
       if (filters?.dikirim_dari) {
         query = query.eq('dikirim_dari', filters.dikirim_dari);
+      }
+      if (filters?.item) {
+        query = query.eq('item', filters.item);
       }
 
       // Apply sorting
@@ -345,6 +355,26 @@ export function usePengirimanOptions() {
 
       // Get unique values and sort them
       const values = data?.map(item => item.dikirim_dari).filter(Boolean) || [];
+      const uniqueValues = Array.from(new Set(values));
+      return uniqueValues.sort();
+    },
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+  });
+}
+
+export function useItemOptions() {
+  return useQuery<string[]>({
+    queryKey: ['itemOptions'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('products')
+        .select('item')
+        .not('item', 'is', null)
+        .not('item', 'eq', '');
+      if (error) throw new Error(error.message);
+
+      // Get unique values and sort them
+      const values = data?.map(item => item.item).filter(Boolean) || [];
       const uniqueValues = Array.from(new Set(values));
       return uniqueValues.sort();
     },
