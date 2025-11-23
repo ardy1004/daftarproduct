@@ -207,11 +207,20 @@ export function FilterSidebar({ filters, onFiltersChange, showFilters, onToggleF
                         const isSubcategoryActive = subcategorySlug === currentSubcategorySlug;
                         return (
                           <li key={subcategoryName} className="space-y-2">
-                            <button
-                              onClick={() => handleSubcategoryClick(currentSubcategorySlug)}
-                              className={`text-sm text-left hover:text-emerald transition-colors ${isSubcategoryActive ? 'text-emerald font-bold' : 'text-muted-foreground'}`}>
-                              {subcategoryName}
-                            </button>
+                            <div className="flex items-center space-x-3">
+                              <Checkbox
+                                id={`subcategory-${currentSubcategorySlug}`}
+                                checked={isSubcategoryActive}
+                                onCheckedChange={() => handleSubcategoryClick(currentSubcategorySlug)}
+                                className="rounded-full data-[state=checked]:bg-emerald data-[state=checked]:text-white"
+                              />
+                              <Label
+                                htmlFor={`subcategory-${currentSubcategorySlug}`}
+                                className={`cursor-pointer hover:text-emerald transition-colors text-sm ${isSubcategoryActive ? 'text-emerald font-bold' : 'text-muted-foreground'}`}
+                              >
+                                {subcategoryName}
+                              </Label>
+                            </div>
                             {isSubcategoryActive && (
                               <div className="pl-4 pt-2 space-y-1">
                                 {isLoadingActiveSubcategoryItems ? (
@@ -220,29 +229,36 @@ export function FilterSidebar({ filters, onFiltersChange, showFilters, onToggleF
                                   activeSubcategoryItems.map((item) => {
                                     const isItemActive = filters.item === item;
                                     return (
-                                      <button
-                                        key={item}
-                                        onClick={() => {
-                                          if (isItemActive) {
-                                            // Toggle off: reset item filter
-                                            onFiltersChange({
-                                              ...filters,
-                                              item: undefined,
-                                            });
-                                          } else {
-                                            // Toggle on: set item filter
-                                            onFiltersChange({
-                                              ...filters,
-                                              item: item,
-                                            });
-                                          }
-                                        }}
-                                        className={`text-xs text-left hover:text-emerald transition-colors block w-full ${
-                                          isItemActive ? 'text-emerald font-semibold' : 'text-muted-foreground'
-                                        }`}
-                                      >
-                                        {item}
-                                      </button>
+                                      <div key={item} className="flex items-center space-x-2">
+                                        <Checkbox
+                                          id={`item-${item}`}
+                                          checked={isItemActive}
+                                          onCheckedChange={() => {
+                                            if (isItemActive) {
+                                              // Toggle off: reset item filter
+                                              onFiltersChange({
+                                                ...filters,
+                                                item: undefined,
+                                              });
+                                            } else {
+                                              // Toggle on: set item filter
+                                              onFiltersChange({
+                                                ...filters,
+                                                item: item,
+                                              });
+                                            }
+                                          }}
+                                          className="rounded-full data-[state=checked]:bg-emerald data-[state=checked]:text-white"
+                                        />
+                                        <Label
+                                          htmlFor={`item-${item}`}
+                                          className={`cursor-pointer hover:text-emerald transition-colors text-xs ${
+                                            isItemActive ? 'text-emerald font-semibold' : 'text-muted-foreground'
+                                          }`}
+                                        >
+                                          {item}
+                                        </Label>
+                                      </div>
                                     );
                                   })
                                 ) : (
