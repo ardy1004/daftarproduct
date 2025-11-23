@@ -161,7 +161,14 @@ export function ProductManagementTab() {
       const batchPromises = batch.map(async (id) => {
         try {
           const randomRating = possibleRatings[Math.floor(Math.random() * possibleRatings.length)];
-          await updateProduct.mutateAsync({ id, rating: randomRating });
+          // Find the product to preserve existing item and video_url values
+          const product = allProducts.find(p => p.id === id);
+          await updateProduct.mutateAsync({
+            id,
+            rating: randomRating,
+            item: product?.item || '', // Preserve existing item value
+            video_url: product?.video_url || '', // Preserve existing video_url value
+          });
           successCount++;
         } catch (error) {
           errorCount++;
@@ -366,11 +373,19 @@ export function ProductManagementTab() {
   const handleGenerateRating = (product: Product) => {
     const possibleRatings = [4, 4.5, 5];
     const randomRating = possibleRatings[Math.floor(Math.random() * possibleRatings.length)];
-    updateProduct.mutate({ id: product.id, rating: randomRating }, {
+
+    // Preserve existing item and video_url values when updating rating
+    updateProduct.mutate({
+      id: product.id,
+      rating: randomRating,
+      item: product.item || '', // Preserve existing item value
+      video_url: product.video_url || '', // Preserve existing video_url value
+    }, {
       onSuccess: () => {
         toast({ title: "Success", description: `Generated new rating for ${product.product_name}.` });
       },
       onError: (error) => {
+        console.error('Error updating rating:', error);
         toast({ variant: "destructive", title: "Error", description: error.message });
       },
     });
