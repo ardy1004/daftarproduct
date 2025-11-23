@@ -175,8 +175,7 @@ export function FilterSidebar({ filters, onFiltersChange, showFilters, onToggleF
       <div className="lg:hidden mb-6">
         <Button
           onClick={onToggleFilters}
-          variant="outline"
-          className="flex items-center space-x-2 w-full justify-center"
+          className="flex items-center space-x-2 w-full justify-center bg-emerald text-emerald-foreground hover:bg-emerald/90"
         >
           <SlidersHorizontal className="h-4 w-4" />
           <span>Filter & Sort</span>
