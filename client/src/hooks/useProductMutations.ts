@@ -66,6 +66,10 @@ export function useUpdateProduct() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...updateData }: { id: string } & Partial<z.infer<typeof productFormSchema>>) => {
+      console.log('[DEBUG] useUpdateProduct received data:', updateData);
+      console.log('[DEBUG] Item in updateData:', updateData.item);
+      console.log('[DEBUG] Video URL in updateData:', updateData.video_url);
+
       const { data, error } = await supabase
         .from('products')
         .update({
@@ -76,13 +80,13 @@ export function useUpdateProduct() {
           original_price: updateData.original_price,
           price: updateData.price,
           sales: updateData.sales,
-          item: updateData.item || '', // Include item field
+          item: updateData.item !== undefined ? updateData.item : undefined, // Only update if provided
           commission: updateData.commission, // Use 'commission' for database compatibility
           dikirim_dari: updateData.dikirim_dari,
           toko: updateData.toko,
           affiliate_url: updateData.affiliate_url,
           image_url: updateData.image_url,
-          video_url: updateData.video_url || '', // Include video_url field
+          video_url: updateData.video_url !== undefined ? updateData.video_url : undefined, // Only update if provided
           rating: updateData.rating, // Include rating field
           is_featured: updateData.is_featured, // Include is_featured field
           featured_order: updateData.featured_order, // Include featured_order field

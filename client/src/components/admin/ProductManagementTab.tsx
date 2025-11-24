@@ -210,28 +210,36 @@ export function ProductManagementTab() {
   const handleBulkUpdateSubmit = async (dataFromDialog: { [key: string]: any }) => {
     if (selectedProductIds.length === 0) return;
 
+    console.log('[DEBUG] Bulk update data from dialog:', dataFromDialog);
+
     // Map camelCase from dialog form to snake_case for the database
     const mappedData = {
       product_name: dataFromDialog.productName,
       category: dataFromDialog.category,
       subcategory: dataFromDialog.subcategory,
       price: dataFromDialog.price,
+      original_price: dataFromDialog.originalPrice,
       sales: dataFromDialog.sales,
-      item: (dataFromDialog as any).item || '', // Include item field
       commission: dataFromDialog.commission, // Use 'commission' for database compatibility
       dikirim_dari: dataFromDialog.dikirim_dari,
       toko: dataFromDialog.toko,
+      item: dataFromDialog.item, // Include item field from bulk update dialog
       affiliate_url: dataFromDialog.affiliateUrl,
       image_url: dataFromDialog.imageUrl,
-      video_url: (dataFromDialog as any).video_url || '', // Include video_url field
+      video_url: dataFromDialog.videoUrl, // Include video_url field from bulk update dialog
       // Note: is_featured not in current database schema
     };
 
-    // The dialog already filters out empty/null values, but this also removes any keys
-    // that were undefined in the mapping (i.e., not present in the dialog form data).
+    console.log('[DEBUG] Mapped data for bulk update:', mappedData);
+
+    // Filter out undefined values but keep empty strings (which mean "set to empty")
     const updatePayload = Object.fromEntries(
       Object.entries(mappedData).filter(([, value]) => value !== undefined)
     );
+
+    console.log('[DEBUG] Update payload for database:', updatePayload);
+    console.log('[DEBUG] Item in payload:', updatePayload.item);
+    console.log('[DEBUG] Video URL in payload:', updatePayload.video_url);
 
     // If no fields were actually filled out, do nothing.
     if (Object.keys(updatePayload).length === 0) {
