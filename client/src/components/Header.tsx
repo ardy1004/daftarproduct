@@ -34,6 +34,7 @@ export function Header({ searchQuery, onSearchChange, onMenuToggle }: HeaderProp
             <SearchBar
               value={searchQuery}
               onChange={onSearchChange}
+              placeholder="Cari Produk....."
             />
           </div>
           
@@ -58,6 +59,7 @@ export function Header({ searchQuery, onSearchChange, onMenuToggle }: HeaderProp
           <SearchBar
             value={searchQuery}
             onChange={onSearchChange}
+            placeholder="Cari Produk....."
           />
         </div>
       </div>

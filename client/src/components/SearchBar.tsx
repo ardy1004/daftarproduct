@@ -86,7 +86,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
         <button className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-emerald transition-colors">
           <Search className="h-5 w-5" />
         </button>
-        {!value && (
+        {!value && !placeholder && (
           <div
             className={`absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground pointer-events-none transition-opacity duration-300 ${
               isVisible ? 'opacity-100' : 'opacity-0'
